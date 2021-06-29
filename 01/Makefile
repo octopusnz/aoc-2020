@@ -6,11 +6,13 @@ CLANG_CFLAGS=-pedantic -std=c17 -Wall -Wextra
 SOURCES:=  $(wildcard *.c)
 
 .PHONY: test clean
+.PHONY: test
 
 test: 01_gcc $(INPUTS)
 	./a.out $(INPUTS)
 
 01_gcc: $(SOURCES)
+
 	$(GCC) $(GCC_CFLAGS) $(SOURCES)
 
 01_clang: $(SOURCES)
