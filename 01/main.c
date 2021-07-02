@@ -16,7 +16,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.*/
+SOFTWARE. */
 
 #include <ctype.h>
 #include <time.h>
@@ -25,11 +25,11 @@ SOFTWARE.*/
 #include <string.h>
 #include <unistd.h>
 
-// This is the maximum number of files we will simultaneously process
+/* This is the maximum number of files we will simultaneously process */
 #define MAX_FILES 3
-// This is the maximum number of lines in a file we will parse
+/* This is the maximum number of lines in a file we will parse */
 #define MAX_LINES 1000
-//This is the maximum number of characters in a file we will parse
+/* This is the maximum number of characters in a file we will parse */
 #define MAX_CHARS 1000000
 
 void brute_force (const char *file_path);
