@@ -1,7 +1,7 @@
 INPUTS=sample.txt
 GCC:=gcc
 CLANG:=clang
-GCC_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes
+GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes
 CLANG_CFLAGS=-pedantic -std=c17 -Wall -Wextra
 SOURCES:=  $(wildcard *.c)
 
