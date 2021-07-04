@@ -55,11 +55,10 @@ int main (int argc, char *argv[])
     }
 
     for (i = 1; i < argc && i < MAX_FILES; ++i) {
-        if (access(argv[i], R_OK) == 0) {
+        if (access(argv[i], R_OK) == 0)
             printf("This file is all good: %s\n", argv[i]);
-        } else {
+        else
             printf("This file didn't exist or wasn't writeable: %s\n", argv[i]);
-        }
     }
 
     for (j = 1; j < argc && j < MAX_FILES; ++j) {
@@ -67,9 +66,8 @@ int main (int argc, char *argv[])
         printf("Number of lines returned is: %d\n", counter);
         magic = create_array(argv[j], counter);
 
-        for (k = 0; k < counter; ++k) {
+        for (k = 0; k < counter;  ++k)
             printf("Magic array contains: %d\n", magic[k]);
-        }
 
         free(magic);
     }
@@ -92,7 +90,7 @@ int count_lines (const char *file_path)
 
     if (fp == NULL) {
         perror("Error opening file: ");
-        return 1;
+        exit(1);
     }
 
     while ((c = getc(fp)) != EOF && (count < MAX_LINES) && (char_count < MAX_CHARS)) {
@@ -143,9 +141,13 @@ int count_lines (const char *file_path)
 int *create_array (const char *file_path, int array_size)
 {
     FILE *fp = NULL;
+    char *endptr = NULL;
     char parser[MAX_LINE_LENGTH] = {0};
     int i = 0;
-    int *data = malloc(sizeof(int) * array_size);
+    int *data = calloc(array_size, sizeof(int));
+    int check_value = 0;
+
+    printf("ARRAZY SIZE: %d\n", array_size);
 
     fp = fopen(file_path, "r");
 
@@ -154,9 +156,22 @@ int *create_array (const char *file_path, int array_size)
         exit(1);
     }
 
-    for (i = 0; (i < array_size) && (i < MAX_LINES);  i++) {
-        fscanf(fp, "%d", &data[i]);
-        printf("Popped this into array: %d\n", data[i]);
+    for (i = 0; (i < array_size) && (i < MAX_LINES); i++) {
+        if (fgets(parser, sizeof(parser), fp) != NULL) {
+            printf( "Number: %d\n", i);
+            parser[strcspn(parser, "\n")] = 0;
+            printf("This what we got: %s\n", parser);
+            check_value = (int) strtol(parser, &endptr, 10);
+        }
+
+        if (endptr == parser)
+            printf("Not a valid integer\n");
+        else if (*endptr != '\0')
+            printf("Valid number, but followed by non-numeric data\n");
+        else {
+            printf("A valid number: %d\n", check_value);
+            data[i] = check_value;
+        }
     }
 
     fclose(fp);
