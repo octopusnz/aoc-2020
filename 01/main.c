@@ -94,6 +94,7 @@ int count_lines (const char *file_path)
     }
 
     while ((c = getc(fp)) != EOF && (count < MAX_LINES) && (char_count < MAX_CHARS)) {
+
         if (isdigit(c)) {
             real_chars++;
             real_char_count++;
@@ -101,9 +102,8 @@ int count_lines (const char *file_path)
             count++;
             total_count++;
             real_chars = 0;
-        } else if (c == '\n') {
+        } else if (c == '\n')
             total_count++;
-        }
 
         char_count++;
         pc = c;
@@ -135,7 +135,7 @@ int count_lines (const char *file_path)
     printf("Real Char Count is: %d\n", real_char_count);
     fclose(fp);
 
-    return count;
+    return total_count;
 }
 
 int *create_array (const char *file_path, int array_size)
