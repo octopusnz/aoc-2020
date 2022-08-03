@@ -1,25 +1,22 @@
 INPUTS=sample.txt
-GCC:=gcc
-CLANG:=clang
-GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes
-CLANG_CFLAGS=-pedantic -std=c17 -Wall -Wextra
-SOURCES:=  $(wildcard *.c)
-LDFLAGS:=-fsanitize=address -fno-omit-frame-pointer
+GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
+F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
+VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
+GCC_PATH=/usr/local/gcc-12.1.0/bin/gcc-12.1
+GCC_PERF=gperf
+SOURCES:=main.c ../libs/eight_files.c
 
-.PHONY: test clean
-.PHONY: test
+.PHONY: test clean SOURCES
 
-test: 01_gcc $(INPUTS)
-	./a.out $(INPUTS)
+test: 	latest $(INPUTS)
+	./asan $(INPUTS)
+	$(VAL_PATH) -s ./a.out $(INPUTS)
 
 latest: $(SOURCES)
-	/usr/local/gcc-11.1.0/bin/gcc $(GCC_CFLAGS) -fsanitize=address -fno-omit-frame-pointer $(SOURCES) $(LDFLAGS)
+	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(F_SANITIZE) -static-libasan -o asan
+	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES)
 
-01_gcc: $(SOURCES)
-	$(GCC) $(GCC_CFLAGS) $(SOURCES)
-
-01_clang: $(SOURCES)
-	$(CLANG) $(CLANG_CFLAGS) $(SOURCES)
-
-clean:	a.out
+clean:	a.out asan gmon.out
 	rm a.out
+	rm asan
+	rm gmon.out
