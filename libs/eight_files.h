@@ -17,7 +17,7 @@ Contains useful utilities for working with files and validating the contents */
 
 /* Function definitions */
 
-int count_lines_in_file (const char *filepath);
-int *read_file_to_array (const char *file_path, int array_size);
+int count_lines_in_file (const char *filepath, int *real_lines);
+int *read_file_to_array (const char *file_path, int array_size, int total_lines_to_read);
 
 #endif

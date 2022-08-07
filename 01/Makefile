@@ -4,7 +4,7 @@ F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
 VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
 GCC_PATH=/usr/local/gcc-12.1.0/bin/gcc-12.1
 GCC_PERF=gperf
-SOURCES:=main.c ../libs/eight_files.c
+SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithims.c
 
 .PHONY: test clean SOURCES
 

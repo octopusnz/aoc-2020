@@ -6,7 +6,7 @@
 
 #include "../libs/eight_files.h"
 
-int count_lines_in_file (const char *file_path)
+int count_lines_in_file (const char *file_path, int *real_lines)
 {
     FILE *fp = NULL;
     int c = 0;
@@ -16,6 +16,7 @@ int count_lines_in_file (const char *file_path)
     int real_chars = 0;
     int real_char_count = 0;
     int total_count = 0;
+
 
     fp = fopen(file_path, "r");
 
@@ -66,10 +67,12 @@ int count_lines_in_file (const char *file_path)
     printf("Real Char Count is: %d\n", real_char_count);
     fclose(fp);
 
+    *real_lines = count;
+
     return total_count;
 }
 
-int *read_file_to_array (const char *file_path, int array_size)
+int *read_file_to_array (const char *file_path, int array_size, int total_lines_to_read)
 {
     FILE *fp = NULL;
     char *endptr = NULL;
@@ -77,6 +80,8 @@ int *read_file_to_array (const char *file_path, int array_size)
     int i = 0;
     int *data = calloc(array_size, sizeof(int));
     int check_value = 0;
+    int valid = 0;
+
 
     printf("ARRAZY SIZE: %d\n", array_size);
 
@@ -96,8 +101,11 @@ int *read_file_to_array (const char *file_path, int array_size)
        and then determine  if  an error occurred by checking whether errno
        has a nonzero value after the call */
 
+    printf("TOTAL LINES TO READ ARE: %d\n", total_lines_to_read);
 
-    for (i = 0; (i < array_size) && (i < MAX_LINES); i++) {
+
+
+    for (i = 0; (i < total_lines_to_read) && (i < MAX_LINES); i++) {
         if (fgets(parser, sizeof(parser), fp) != NULL) {
             printf( "Number: %d\n", i);
             parser[strcspn(parser, "\n")] = 0;
@@ -105,7 +113,7 @@ int *read_file_to_array (const char *file_path, int array_size)
             errno=0;
             check_value = (int) strtol(parser, &endptr, 10);
 
-            if (errno != 0 && check_value == 0) {
+            if (errno != 0) {
                perror("strtol");
                exit(EXIT_FAILURE);
 
@@ -114,11 +122,13 @@ int *read_file_to_array (const char *file_path, int array_size)
 
         if (endptr == parser)
             printf("Not a valid integer\n");
-        else if (*endptr != '\0')
+        else if (*endptr != '\0' && check_value == 0)
             printf("Valid number, but followed by non-numeric data\n");
         else {
             printf("A valid number: %d\n", check_value);
-            data[i] = check_value;
+            data[valid] = check_value;
+            valid++;
+
         }
     }
 
