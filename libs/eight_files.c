@@ -16,6 +16,8 @@ int count_lines_in_file (const char *file_path, int *real_lines)
     int real_chars = 0;
     int real_char_count = 0;
     int total_count = 0;
+    int fake_chars = 0;
+    int fake_char_count = 0;
 
 
     fp = fopen(file_path, "r");
@@ -30,15 +32,28 @@ int count_lines_in_file (const char *file_path, int *real_lines)
         if (isdigit(c)) {
             real_chars++;
             real_char_count++;
-        } else if ((c == '\n') && (real_chars > 0)) {
-            count++;
-            total_count++;
-            real_chars = 0;
-        } else if (c == '\n')
-            total_count++;
 
-        char_count++;
-        pc = c;
+        } else if (c != '\n') {
+                fake_chars++;
+                fake_char_count++;
+
+        } else if ((c == '\n') && (real_chars > 0) && (fake_chars == 0)) {
+                count++;
+                total_count++;
+                fake_char_count++;
+                real_chars = 0;
+                fake_chars = 0;
+
+        } else {
+                total_count++;
+                real_chars = 0;
+                fake_chars = 0;
+                fake_char_count++;
+        }
+
+            char_count++;
+            pc = c;
+
     }
 
     if ((pc != '\n') && (real_chars > 0)) {
@@ -65,6 +80,8 @@ int count_lines_in_file (const char *file_path, int *real_lines)
     printf("Real Line Count is: %d\n", count);
     printf("Total Char Count is: %d\n", char_count);
     printf("Real Char Count is: %d\n", real_char_count);
+    printf("Fake Char Count is %d\n", fake_char_count);
+
     fclose(fp);
 
     *real_lines = count;
@@ -92,7 +109,6 @@ int *read_file_to_array (const char *file_path, int array_size, int total_lines_
         exit(1);
     }
 
-
     /* See 'man strtol'
 
        Since  strtol() can legitimately return 0, LONG_MAX, or LONG_MIN
@@ -102,8 +118,6 @@ int *read_file_to_array (const char *file_path, int array_size, int total_lines_
        has a nonzero value after the call */
 
     printf("TOTAL LINES TO READ ARE: %d\n", total_lines_to_read);
-
-
 
     for (i = 0; (i < total_lines_to_read) && (i < MAX_LINES); i++) {
         if (fgets(parser, sizeof(parser), fp) != NULL) {
@@ -122,7 +136,7 @@ int *read_file_to_array (const char *file_path, int array_size, int total_lines_
 
         if (endptr == parser)
             printf("Not a valid integer\n");
-        else if (*endptr != '\0' && check_value == 0)
+        else if (*endptr != '\0')
             printf("Valid number, but followed by non-numeric data\n");
         else {
             printf("A valid number: %d\n", check_value);
