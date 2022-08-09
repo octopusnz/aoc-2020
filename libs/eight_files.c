@@ -50,10 +50,8 @@ int count_lines_in_file (const char *file_path, int *real_lines)
                 fake_chars = 0;
                 fake_char_count++;
         }
-
             char_count++;
             pc = c;
-
     }
 
     if ((pc != '\n') && (real_chars > 0)) {
@@ -73,7 +71,7 @@ int count_lines_in_file (const char *file_path, int *real_lines)
 
     if (real_char_count == 0) {
         printf("It looks like this was an empty file\n");
-        count = 0;
+        total_count = 0;
     }
 
     printf("Total Line Count is: %d\n", total_count);
@@ -130,7 +128,6 @@ int *read_file_to_array (const char *file_path, int array_size, int total_lines_
             if (errno != 0) {
                perror("strtol");
                exit(EXIT_FAILURE);
-
             }
         }
 
@@ -142,11 +139,9 @@ int *read_file_to_array (const char *file_path, int array_size, int total_lines_
             printf("A valid number: %d\n", check_value);
             data[valid] = check_value;
             valid++;
-
         }
     }
 
     fclose(fp);
-
     return data;
 }
