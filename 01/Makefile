@@ -1,22 +1,25 @@
-INPUTS=sample.txt
+INPUTS=sample.txt sample2.txt
 GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
+CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
 F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
 VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
 GCC_PATH=/usr/local/gcc-12.1.0/bin/gcc-12.1
-GCC_PERF=gperf
+CLANG_PATH=clang
 SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithims.c
 
 .PHONY: test clean SOURCES
 
 test: 	latest $(INPUTS)
-	./asan $(INPUTS)
-	$(VAL_PATH) -s ./a.out $(INPUTS)
+	./asan.out $(INPUTS)
+	$(VAL_PATH) -s ./clang.out $(INPUTS)
 
 latest: $(SOURCES)
-	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(F_SANITIZE) -static-libasan -o asan
-	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES)
+	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(F_SANITIZE) -static-libasan -o asan.out
+	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
+	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 
-clean:	a.out asan gmon.out
-	rm a.out
-	rm asan
+clean:	gcc.out asan.out gmon.out clang.out
+	rm gcc.out
+	rm asan.out
 	rm gmon.out
+	rm clang.out

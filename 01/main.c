@@ -21,53 +21,59 @@ SOFTWARE. */
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-#include "../libs/eight_files.h"
 #include "../libs/eight_algorithims.h"
+#include "../libs/eight_files.h"
 
-int main (int argc, char *argv[])
-{
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int l = 0;
-    int counter = 0;
-    int real_lines = 0;
-    int *magic = NULL;
+int main(int argc, char *argv[]) {
+  int i = 0;
+  int k = 0;
+  int l = 0;
+  int counter = 0;
+  int real_lines = 0;
+  int *magic = NULL;
+  int files = 0;
 
-    if (argc < 2) {
-      printf("Error: No input file specified\n");
-      exit(1);
-    } else if (argc > (MAX_FILES + 1)) {
-        printf("Error: Too many arguments specified. Expected %d\n", MAX_FILES);
-        exit(1);
-    }
+  if (argc < 2) {
+    printf("Error: No input file specified\n");
+    exit(1);
+  } else if (argc > (MAX_FILES + 1)) {
+    printf("Error: Too many arguments specified. Expected %d\n", MAX_FILES);
+    exit(1);
+  }
 
-    for (i = 1; i < argc && i < MAX_FILES; ++i) {
-        if (access(argv[i], R_OK) == 0)
-            printf("This file is all good: %s\n", argv[i]);
-        else
-            printf("This file didn't exist or wasn't writeable: %s\n", argv[i]);
-    }
+  for (i = 1; i < argc && i < MAX_FILES; ++i) {
+    if (access(argv[i], R_OK) == 0) {
+      printf("This file is all good: %s\n", argv[i]);
+      files++;
+      counter = count_lines_in_file(argv[i], &real_lines);
+      printf("Number of lines returned is: %d\n", counter);
+      printf("Number of real lines returned is: %d\n", real_lines);
+      magic = read_file_to_array(argv[i], real_lines, counter);
 
-    for (j = 1; j < argc && j < MAX_FILES; ++j) {
-        counter = count_lines_in_file(argv[j], &real_lines);
-        printf("Number of lines returned is: %d\n", counter);
-        printf("Number of real lines returned is: %d\n", real_lines);
-        magic = read_file_to_array(argv[j], real_lines, counter);
+      for (k = 0; k < real_lines; ++k)
+        printf("Magic array contains: %d\n", magic[k]);
 
-        for (k = 0; k < real_lines; ++k)
-            printf("Magic array contains: %d\n", magic[k]);
+      qsort(magic, real_lines, sizeof(int), qsort_compare);
 
-        qsort(magic, real_lines, sizeof(int), qsort_compare);
+      for (l = 0; l < real_lines; ++l)
+        printf("Sorted array contains: %d\n", magic[l]);
 
-        for (l=0; l < real_lines; ++l)
-            printf("Sorted array contains: %d\n", magic[l]);
+      counter = 0;
+      real_lines = 0;
+      free(magic);
+    } else
+      printf("This file didn't exist wasn't writeable or the file name was too "
+             "long: %s\n",
+             argv[i]);
+  }
 
-        free(magic);
+  if (files == 0) {
+    printf("Looks like no valid files");
+    exit(1);
+  }
 
-    }
-
-    return 0;
+  return 0;
 }
