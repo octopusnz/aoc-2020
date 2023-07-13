@@ -21,20 +21,23 @@ SOFTWARE. */
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "../libs/eight_algorithims.h"
 #include "../libs/eight_files.h"
 
 int main(int argc, char *argv[]) {
+
   int i = 0;
-  int k = 0;
-  int l = 0;
+  int j = 0;
   int counter = 0;
   int real_lines = 0;
   int *magic = NULL;
   int files = 0;
+  int number1 = 0;
+  int number2 = 0;
+
+  int k = 0;
 
   if (argc < 2) {
     printf("Error: No input file specified\n");
@@ -46,28 +49,27 @@ int main(int argc, char *argv[]) {
 
   for (i = 1; i < argc && i < MAX_FILES; ++i) {
     if (access(argv[i], R_OK) == 0) {
-      printf("This file is all good: %s\n", argv[i]);
+      printf("Processing file: %s\n", argv[i]);
       files++;
       counter = count_lines_in_file(argv[i], &real_lines);
-      printf("Number of lines returned is: %d\n", counter);
-      printf("Number of real lines returned is: %d\n", real_lines);
       magic = read_file_to_array(argv[i], real_lines, counter);
-
-      for (k = 0; k < real_lines; ++k)
-        printf("Magic array contains: %d\n", magic[k]);
-
       qsort(magic, real_lines, sizeof(int), qsort_compare);
 
-      for (l = 0; l < real_lines; ++l)
-        printf("Sorted array contains: %d\n", magic[l]);
+      for (k = 0; k < real_lines; ++k) {
 
+        printf("Magic array contains: %d\n", magic[k]);
+        if (magic[k] % 2020 == 0) {
+          printf("True: %d\n", magic[k]);
+        }
+
+        else
+          printf("False: %d\n", (2020 % magic[k]));
+      }
       counter = 0;
       real_lines = 0;
       free(magic);
     } else
-      printf("This file didn't exist wasn't writeable or the file name was too "
-             "long: %s\n",
-             argv[i]);
+      printf("This file didn't exist or wasn't writeable  %s\n", argv[i]);
   }
 
   if (files == 0) {
