@@ -29,15 +29,14 @@ SOFTWARE. */
 int main(int argc, char *argv[]) {
 
   int i = 0;
-  int j = 0;
   int counter = 0;
   int real_lines = 0;
   int *magic = NULL;
+  int *matches = NULL;
+  int target_num = 2020;
   int files = 0;
-  int number1 = 0;
-  int number2 = 0;
-
-  int k = 0;
+  int large_int = 0;
+  Matches result = {0, 0, 0};
 
   if (argc < 2) {
     printf("Error: No input file specified\n");
@@ -53,21 +52,23 @@ int main(int argc, char *argv[]) {
       files++;
       counter = count_lines_in_file(argv[i], &real_lines);
       magic = read_file_to_array(argv[i], real_lines, counter);
-      qsort(magic, real_lines, sizeof(int), qsort_compare);
-
-      for (k = 0; k < real_lines; ++k) {
-
-        printf("Magic array contains: %d\n", magic[k]);
-        if (magic[k] % 2020 == 0) {
-          printf("True: %d\n", magic[k]);
-        }
-
-        else
-          printf("False: %d\n", (2020 % magic[k]));
+      large_int = find_max(magic, real_lines);
+      result = find_pair(magic, real_lines, large_int, target_num);
+      if (result.found) {
+        printf("Pair found: %d and %d\n", result.num1, result.num2);
+      } else {
+          printf("No pair found.\n");
       }
+
+      /* qsort(magic, real_lines, sizeof(int), qsort_compare); */
+
+      /* for (k = 0; k < real_lines; ++k) {
+        printf("Array contains: %d\n", magic[k]);
+        } */
       counter = 0;
       real_lines = 0;
       free(magic);
+      free(matches);
     } else
       printf("This file didn't exist or wasn't writeable  %s\n", argv[i]);
   }

@@ -77,7 +77,6 @@ int count_lines_in_file(const char *file_path, int *real_lines) {
   printf("Real Line Count is: %d\n", count);
   printf("Total Char Count is: %d\n", char_count);
   printf("Real Char Count is: %d\n", real_char_count);
-  printf("Fake Char Count is %d\n", fake_char_count);
 
   fclose(fp);
 
@@ -96,8 +95,6 @@ int *read_file_to_array(const char *file_path, int array_size,
   int check_value = 0;
   int valid = 0;
 
-  printf("ARRAZY SIZE: %d\n", array_size);
-
   fp = fopen(file_path, "r");
 
   if (fp == NULL) {
@@ -113,13 +110,9 @@ int *read_file_to_array(const char *file_path, int array_size,
      and then determine  if  an error occurred by checking whether errno
      has a nonzero value after the call */
 
-  printf("TOTAL LINES TO READ ARE: %d\n", total_lines_to_read);
-
   for (i = 0; (i < total_lines_to_read) && (i < MAX_LINES); i++) {
     if (fgets(parser, sizeof(parser), fp) != NULL) {
-      printf("Number: %d\n", i);
       parser[strcspn(parser, "\n")] = 0;
-      printf("This what we got: %s\n", parser);
       errno = 0;
       check_value = (int)strtol(parser, &endptr, 10);
 
@@ -134,7 +127,6 @@ int *read_file_to_array(const char *file_path, int array_size,
     else if (*endptr != '\0')
       printf("Valid number, but followed by non-numeric data\n");
     else {
-      printf("A valid number: %d\n", check_value);
       data[valid] = check_value;
       valid++;
     }

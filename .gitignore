@@ -1,8 +1,4 @@
-01/gmon.out
-01/a.out
-01/asan.out
-01/clang.out
-01/gcc.out
+*.out
 .github/
 \#*\#
 *.sublime-workspace
