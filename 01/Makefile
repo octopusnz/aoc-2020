@@ -1,11 +1,11 @@
-INPUTS=sample.txt
+INPUTS=sample.txt finaldata.txt
 GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
 CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
 F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
 VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
 GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
-SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithims.c
+SOURCES:=main.c mainwrappers.c ../libs/eight_files.c ../libs/eight_algorithims.c ../libs/eight_time.c
 
 .PHONY: test clean SOURCES
 

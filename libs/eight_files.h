@@ -14,6 +14,7 @@ Contains useful utilities for working with files and validating the contents */
 #define MAX_FILE_NAME_CHARS 20
 #define MAX_LINES 1000
 #define MAX_LINE_LENGTH 100
+#define MAX_INT_VALUE 10000
 
 /* Function definitions */
 
