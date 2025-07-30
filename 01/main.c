@@ -122,8 +122,8 @@ int main(int argc, char* argv[])
             printf("============================================\n");
             printf("Time summary based on approach:\n");
             for (j = 0; j < time_size; j++) {
-                printf("%d. %s %f seconds\n", j + 1, final_times[j].method,
-                       final_times[j].time);
+                printf("%d. %s %.4f milliseconds\n", j + 1, final_times[j].method,
+                       final_times[j].time * 1000);
             }
             printf("============================================\n");
             counter = 0;
