@@ -36,9 +36,11 @@ int main(int argc, char* argv[])
     int real_lines = 0;
     int* magic = NULL;
     int target_num = 2020;
+    int target_num3 = 2020;
     int files = 0;
     int large_int = 0;
     Matches result = { 0, 0, 0 };
+    ManyMatches result3 = { 0, 0, 0, 0 };
     Times final_times[3] = { 0 };
     clock_t start = 0;
     clock_t end = 0;
@@ -64,6 +66,18 @@ int main(int argc, char* argv[])
             counter = count_lines_in_file(argv[i], &real_lines);
             magic = read_file_to_array(argv[i], real_lines, counter);
             large_int = find_max(magic, real_lines);
+
+            printf("Finding triple using a HashTable...\n");
+            result3 = find_triple(magic, real_lines, large_int, target_num3);
+
+            if (result3.found) {
+                printf("Triple found: %d and %d and %d\n", result3.num1, result3.num2, result3.num3);
+                printf("Final Result: %d\n", result3.num1 * result3.num2 * result3.num3);
+
+            } else {
+                printf("No triplet found.\n");
+            }
+
 
             printf("Finding numbers using a HashTable...\n");
             start = clock();
