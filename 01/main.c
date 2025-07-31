@@ -28,39 +28,44 @@ SOFTWARE. */
 #include "../libs/eight_algorithims.h"
 #include "../libs/eight_files.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int i = 0;
     int j = 0;
     int counter = 0;
     int real_lines = 0;
-    int* magic = NULL;
+    int *magic = NULL;
     int target_num = 2020;
     int target_num3 = 2020;
     int files = 0;
     int large_int = 0;
-    Matches result = { 0, 0, 0 };
-    ManyMatches result3 = { 0, 0, 0, 0 };
-    Times final_times[3] = { 0 };
+    Matches result = {0, 0, 0};
+    ManyMatches result3 = {0, 0, 0, 0};
+    Times final_times[3] = {0};
     clock_t start = 0;
     clock_t end = 0;
     double qsort_time_taken = 0;
     double bubble_time_taken = 0;
     double pair_time_taken = 0;
     double hash_time_taken = 0;
-    int* unsorted = NULL;
+    int *unsorted = NULL;
     int time_size = 0;
 
-    if (argc < 2) {
+    if (argc < 2)
+    {
         printf("Error: No input file specified\n");
         exit(1);
-    } else if (argc > (MAX_FILES + 1)) {
+    }
+    else if (argc > (MAX_FILES + 1))
+    {
         printf("Error: Too many arguments specified. Expected %d\n", MAX_FILES);
         exit(1);
     }
 
-    for (i = 1; i < argc && i < MAX_FILES; ++i) {
-        if (access(argv[i], R_OK) == 0) {
+    for (i = 1; i < argc && i < MAX_FILES; ++i)
+    {
+        if (access(argv[i], R_OK) == 0)
+        {
             printf("Processing file: %s\n", argv[i]);
             files++;
             counter = count_lines_in_file(argv[i], &real_lines);
@@ -70,14 +75,15 @@ int main(int argc, char* argv[])
             printf("Finding triple using a HashTable...\n");
             result3 = find_triple(magic, real_lines, large_int, target_num3);
 
-            if (result3.found) {
+            if (result3.found)
+            {
                 printf("Triple found: %d and %d and %d\n", result3.num1, result3.num2, result3.num3);
                 printf("Final Result: %d\n", result3.num1 * result3.num2 * result3.num3);
-
-            } else {
+            }
+            else
+            {
                 printf("No triplet found.\n");
             }
-
 
             printf("Finding numbers using a HashTable...\n");
             start = clock();
@@ -85,24 +91,29 @@ int main(int argc, char* argv[])
             end = clock();
             hash_time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
 
-            if (result.found) {
+            if (result.found)
+            {
                 printf("Pair found: %d and %d\n", result.num1, result.num2);
                 printf("Final Result: %d\n", result.num1 * result.num2);
-
-            } else {
+            }
+            else
+            {
                 printf("No pair found.\n");
             }
 
             printf("Finding numbers by sorting and then using two pointers...\n");
-            unsorted = (int*)calloc(real_lines, sizeof(int));
+            unsorted = (int *)calloc(real_lines, sizeof(int));
+            if (!unsorted) {
+                fprintf(stderr, "Memory allocation failed for unsorted array\n");
+                free(magic);
+                exit(1);
+            }
             memcpy(unsorted, magic, real_lines * sizeof(int));
             start = clock();
             qsort(unsorted, real_lines, sizeof(int), qsort_compare);
             end = clock();
             qsort_time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
-            free(unsorted);
 
-            unsorted = (int*)calloc(real_lines, sizeof(int));
             memcpy(unsorted, magic, real_lines * sizeof(int));
             start = clock();
             bubble_sort(unsorted, real_lines);
@@ -114,11 +125,13 @@ int main(int argc, char* argv[])
             end = clock();
             pair_time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
 
-            if (result.found) {
+            if (result.found)
+            {
                 printf("Pair found: %d and %d\n", result.num1, result.num2);
                 printf("Final Result: %d\n", result.num1 * result.num2);
-
-            } else {
+            }
+            else
+            {
                 printf("No pair found.\n");
             }
 
@@ -131,11 +144,12 @@ int main(int argc, char* argv[])
 
             time_size = sizeof(final_times) / sizeof(final_times[0]);
             qsort(final_times, time_size, sizeof(Times),
-              qsort_compare_time_struct);
+                  qsort_compare_time_struct);
 
             printf("============================================\n");
             printf("Time summary based on approach:\n");
-            for (j = 0; j < time_size; j++) {
+            for (j = 0; j < time_size; j++)
+            {
                 printf("%d. %s %.4f milliseconds\n", j + 1, final_times[j].method,
                        final_times[j].time * 1000);
             }
@@ -144,12 +158,13 @@ int main(int argc, char* argv[])
             real_lines = 0;
             free(magic);
             free(unsorted);
-
-        } else
+        }
+        else
             printf("This file didn't exist or wasn't writeable  %s\n", argv[i]);
     }
 
-    if (files == 0) {
+    if (files == 0)
+    {
         printf("Looks like no valid files");
         exit(1);
     }

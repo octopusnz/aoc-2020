@@ -6,7 +6,8 @@
 
 #include "../libs/eight_files.h"
 
-int count_lines_in_file(const char *file_path, int *real_lines) {
+int count_lines_in_file(const char *file_path, int *real_lines)
+{
   FILE *fp = NULL;
   int c = 0;
   int pc = 0;
@@ -20,30 +21,36 @@ int count_lines_in_file(const char *file_path, int *real_lines) {
 
   fp = fopen(file_path, "r");
 
-  if (fp == NULL) {
+  if (fp == NULL)
+  {
     perror("Error opening file");
     exit(1);
   }
 
   while ((c = getc(fp)) != EOF && (count < MAX_LINES) &&
-         (char_count < MAX_CHARS)) {
+         (char_count < MAX_CHARS))
+  {
 
-    if (isdigit(c)) {
+    if (isdigit(c))
+    {
       real_chars++;
       real_char_count++;
-
-    } else if (c != '\n') {
+    }
+    else if (c != '\n')
+    {
       fake_chars++;
       fake_char_count++;
-
-    } else if ((c == '\n') && (real_chars > 0) && (fake_chars == 0)) {
+    }
+    else if ((c == '\n') && (real_chars > 0) && (fake_chars == 0))
+    {
       count++;
       total_count++;
       fake_char_count++;
       real_chars = 0;
       fake_chars = 0;
-
-    } else {
+    }
+    else
+    {
       total_count++;
       real_chars = 0;
       fake_chars = 0;
@@ -53,22 +60,26 @@ int count_lines_in_file(const char *file_path, int *real_lines) {
     pc = c;
   }
 
-  if ((pc != '\n') && (real_chars > 0)) {
+  if ((pc != '\n') && (real_chars > 0))
+  {
     count++;
     total_count++;
   }
 
-  if (count >= MAX_LINES && c != EOF) {
+  if (count >= MAX_LINES && c != EOF)
+  {
     printf("We may have stopped processing this file part-way\n");
     printf("We processed up to %d lines\n", total_count);
   }
 
-  if (char_count >= MAX_CHARS && c != EOF) {
+  if (char_count >= MAX_CHARS && c != EOF)
+  {
     printf("We may have stopped processing this file part-way\n");
     printf("We processed up to %d characters\n", char_count);
   }
 
-  if (real_char_count == 0) {
+  if (real_char_count == 0)
+  {
     printf("It looks like this was an empty file\n");
     total_count = 0;
   }
@@ -86,7 +97,8 @@ int count_lines_in_file(const char *file_path, int *real_lines) {
 }
 
 int *read_file_to_array(const char *file_path, int array_size,
-                        int total_lines_to_read) {
+                        int total_lines_to_read)
+{
   FILE *fp = NULL;
   char *endptr = NULL;
   char parser[MAX_LINE_LENGTH] = {0};
@@ -97,7 +109,8 @@ int *read_file_to_array(const char *file_path, int array_size,
 
   fp = fopen(file_path, "r");
 
-  if (fp == NULL) {
+  if (fp == NULL)
+  {
     perror("Error opening file:");
     exit(1);
   }
@@ -110,13 +123,16 @@ int *read_file_to_array(const char *file_path, int array_size,
      and then determine  if  an error occurred by checking whether errno
      has a nonzero value after the call */
 
-  for (i = 0; (i < total_lines_to_read) && (i < MAX_LINES); i++) {
-    if (fgets(parser, sizeof(parser), fp) != NULL) {
+  for (i = 0; (i < total_lines_to_read) && (i < MAX_LINES); i++)
+  {
+    if (fgets(parser, sizeof(parser), fp) != NULL)
+    {
       parser[strcspn(parser, "\n")] = 0;
       errno = 0;
       check_value = (int)strtol(parser, &endptr, 10);
 
-      if (errno != 0) {
+      if (errno != 0)
+      {
         perror("strtol");
         exit(EXIT_FAILURE);
       }
@@ -126,7 +142,8 @@ int *read_file_to_array(const char *file_path, int array_size,
       printf("Not a valid integer\n");
     else if (*endptr != '\0')
       printf("Valid number, but followed by non-numeric data\n");
-    else {
+    else
+    {
       data[valid] = check_value;
       valid++;
     }

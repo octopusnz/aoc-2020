@@ -9,24 +9,26 @@ Contains useful utilities for working with datasets and sorting */
 
 /* Structs */
 
-typedef struct {
-    int num1;
-    int num2;
-    int found;
+typedef struct
+{
+   int num1;
+   int num2;
+   int found;
 } Matches;
 
-typedef struct {
-    int num1;
-    int num2;
-    int num3;
-    int found;
+typedef struct
+{
+   int num1;
+   int num2;
+   int num3;
+   int found;
 } ManyMatches;
 
-typedef struct {
-    char method[20];
-    double time;
+typedef struct
+{
+   char method[20];
+   double time;
 } Times;
-
 
 /* Function definitions */
 
