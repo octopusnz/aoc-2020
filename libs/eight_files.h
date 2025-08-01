@@ -16,10 +16,22 @@ Contains useful utilities for working with files and validating the contents */
 #define MAX_LINE_LENGTH 100
 #define MAX_INT_VALUE 10000
 
+/* Structs */
+
+typedef struct {
+    int min;
+    int max;
+    char value[MAX_LINE_LENGTH];
+    char letter;
+} FileStore;
+
 /* Function definitions */
 
 int count_lines_in_file(const char *filepath, int *real_lines);
+int count_lines_in_file_alnum(const char *file_path, int *real_lines);
 int *read_file_to_array(const char *file_path, int array_size,
                         int total_lines_to_read);
+FileStore *read_file_to_array_alnum(const char *file_path, int array_size,
+                        int *counter);                      
 
 #endif

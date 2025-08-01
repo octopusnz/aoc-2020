@@ -2,19 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../libs/eight_algorithims.h"
+#include "../libs/eight_files.h"
 
-int qsort_compare_time_struct(const void *a, const void *b)
+int is_letter_count_valid(FileStore entry)
 {
+    int count = 0;
+    int i = 0;
 
-    const Times *timeA = (const Times *)a;
-    const Times *timeB = (const Times *)b;
-
-    if (timeA->time < timeB->time)
-        return -1;
-    else if (timeA->time > timeB->time)
-        return 1;
-    else
-        return 0;
+    for (i = 0; entry.value[i] != '\0'; i++)
+    {
+        if (entry.value[i] == entry.letter)
+        {
+            count++;
+        }
+    }
+    return (count >= entry.min && count <= entry.max);
 }
 
 void bubble_sort(int *array_name, int array_size)
@@ -35,7 +37,6 @@ void bubble_sort(int *array_name, int array_size)
                 temp = array_name[j];
                 array_name[j] = array_name[j + 1];
                 array_name[j + 1] = temp;
-
                 swapped = 1;
             }
         }
@@ -46,7 +47,6 @@ void bubble_sort(int *array_name, int array_size)
 
 ManyMatches find_triple_sorted(int *array_name, int array_size, int target_num)
 {
-
     int i = 0;
     int left = 0;
     int right = 0;
@@ -84,9 +84,8 @@ ManyMatches find_triple_sorted(int *array_name, int array_size, int target_num)
 
 Matches find_pair_sorted(int *array_name, int array_size, int target_num)
 {
-
     int left = 0;
-    int right = (array_size - 1);
+    int right = array_size - 1;
     Matches result = {0, 0, 0};
 
     while (left < right)
@@ -114,7 +113,6 @@ Matches find_pair_sorted(int *array_name, int array_size, int target_num)
 
 int find_max(int *array_name, int array_size)
 {
-
     int i = 0;
     int max_value = array_name[0];
     for (i = 1; i < array_size; i++)
@@ -140,15 +138,13 @@ int qsort_compare(const void *a, const void *b)
         return 1;
 }
 
-ManyMatches find_triple(int *array_name, int array_size, int large_int,
-                        int target_num)
+ManyMatches find_triple(int *array_name, int array_size, int large_int, int target_num)
 {
     int *hashTable = (int *)calloc(large_int + 1, sizeof(int));
     int i = 0;
     int j = 0;
     int current_target = 0;
     int complement = 0;
-
     ManyMatches result = {0, 0, 0, 0};
 
     if (!hashTable)
@@ -157,25 +153,17 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int,
         return result;
     }
 
-    /* We minus 2 from array_size as we need to find three numbers in total.
-       If there are less than 3 numbers left in array we can't do that. */
-
     for (i = 0; i < array_size - 2; i++)
     {
-        /* Clear the hash table for this base index */
         memset(hashTable, 0, (large_int + 1) * sizeof(int));
-        complement = 0;
         current_target = target_num - array_name[i];
 
         for (j = i + 1; j < array_size; j++)
         {
             complement = current_target - array_name[j];
 
-            /* Check both ends of the bounds before lookup */
-            if (complement >= 0 && complement <= large_int &&
-                hashTable[complement])
+            if (complement >= 0 && complement <= large_int && hashTable[complement])
             {
-                /* Found a valid triplet */
                 result.num1 = complement;
                 result.num2 = array_name[i];
                 result.num3 = array_name[j];
@@ -184,23 +172,19 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int,
                 return result;
             }
 
-            /* Mark this value for future complement checks */
             if (array_name[j] >= 0 && array_name[j] <= large_int)
             {
                 hashTable[array_name[j]] = 1;
             }
             else
             {
-                /* This should never happen but in case */
-                printf("Out-of-bounds value %d at index %d\n",
-                       array_name[j], j);
+                printf("Out-of-bounds value %d at index %d\n", array_name[j], j);
                 free(hashTable);
                 return result;
             }
         }
     }
 
-    /* No triplet found after exhausting all i/j */
     printf("No triplet found");
     free(hashTable);
     return result;
@@ -208,7 +192,6 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int,
 
 Matches find_pair(int *array_name, int array_size, int large_int, int target_num)
 {
-
     int *hashTable = (int *)calloc(large_int + 1, sizeof(int));
     int i = 0;
     Matches result = {0, 0, 0};

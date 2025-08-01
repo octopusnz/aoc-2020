@@ -7,6 +7,8 @@ Contains useful utilities for working with datasets and sorting */
 #ifndef EIGHT_ALGORITHIMS_H
 #define EIGHT_ALGORITHIMS_H
 
+#include "eight_files.h"
+
 /* Structs */
 
 typedef struct
@@ -70,5 +72,7 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
 /* Find three numbers that sum to a fourth number, in a sorted array using two pointers */
 
 ManyMatches find_triple_sorted(int *array_name, int array_size, int target_num);
+
+int is_letter_count_valid(FileStore entry);
 
 #endif
