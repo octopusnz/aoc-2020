@@ -28,8 +28,8 @@ typedef struct
 
 typedef struct
 {
-   char method[20];
    double time;
+   char method[20];
 } Times;
 
 /* Function definitions */

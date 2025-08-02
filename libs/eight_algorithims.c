@@ -186,7 +186,7 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
                 return result;
             }
 
-            if (array_name[j] >= 0 && array_name[j] <= large_int)
+            if (array_name[j] >= 0 && array_name[j] < large_int + 1)
             {
                 hashTable[array_name[j]] = 1;
             }

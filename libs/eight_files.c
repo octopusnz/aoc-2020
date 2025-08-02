@@ -31,9 +31,11 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
     {
         int is_real = 0;
         switch (mode) {
-            case LINE_MODE_ALNUM:
+            /* Format: 1-3 a: abcde */
+            case LINE_MODE_CUSTOM1:
                 is_real = (isalnum(c) || c == ':' || c == '-' || c == ' ');
                 break;
+            /* Format: the character is a digit. See 'man isdigit' */
             case LINE_MODE_DIGIT:
                 is_real = isdigit(c);
                 break;
@@ -106,99 +108,83 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
     return total_count;
 }
 
-FileStore *read_file_to_array_alnum(const char *file_path, int array_size,
-                        int *counter)
+int read_file_to_array(const char *file_path, int array_size, void *out_array, 
+    int *out_count, ReadMode mode)
 {
     FILE *fp = NULL;
-    FileStore *entries = calloc(array_size, sizeof(FileStore));
     int count = 0;
     char line[MAX_LINE_LENGTH];
 
     fp = fopen(file_path, "r");
-
     if (fp == NULL)
     {
         perror("Error opening file:");
-        exit(1);
+        return -1;
     }
 
-    while (fgets(line, sizeof(line), fp) && count < MAX_LINES) {
-        /* Format: 1-3 a: abcde */
-        int min, max;
-        char letter;
-        char value[MAX_LINE_LENGTH];
-
-        if (sscanf(line, "%d-%d %c: %s", &min, &max, &letter, value) == 4) {
-            entries[count].min = min;
-            entries[count].max = max;
-            entries[count].letter = letter;
-            strncpy(entries[count].value, value, MAX_LINE_LENGTH);
-            count++;
-        } else {
-            fprintf(stderr, "Malformed line: %s", line);
+    if (mode == READ_MODE_FILESTORE)
+    {
+        FileStore *entries = (FileStore *)out_array;
+        while (fgets(line, sizeof(line), fp) && count < array_size)
+        {
+            int min, max;
+            char letter;
+            char value[MAX_LINE_LENGTH];
+            if (sscanf(line, "%d-%d %c: %s", &min, &max, &letter, value) == 4)
+            {
+                entries[count].min = min;
+                entries[count].max = max;
+                entries[count].letter = letter;
+                strncpy(entries[count].value, value, MAX_LINE_LENGTH);
+                count++;
+            }
+            else
+            {
+                fprintf(stderr, "Malformed line: %s", line);
+            }
         }
     }
-
-    fclose(fp);
-    *counter = count;
-    return entries;
-
-}
-
-int *read_file_to_array(const char *file_path, int array_size,
-                        int total_lines_to_read)
-{
-    FILE *fp = NULL;
-    char *endptr = NULL;
-    char parser[MAX_LINE_LENGTH] = {0};
-    int i = 0;
-    int *data = calloc(array_size, sizeof(int));
-    int check_value = 0;
-    int valid = 0;
-
-    fp = fopen(file_path, "r");
-
-    if (fp == NULL)
+    else if (mode == READ_MODE_INT)
     {
-        perror("Error opening file:");
-        exit(1);
-    }
-
-    /* See 'man strtol'
-
-       Since  strtol() can legitimately return 0, LONG_MAX, or LONG_MIN
-       (LLONG_MAX or LLONG_MIN for strtoll()) on both the success and failure,
-       the calling program should set errno to 0 before the call,
-       and then determine  if  an error occurred by checking whether errno
-       has a nonzero value after the call */
-
-    for (i = 0; (i < total_lines_to_read) && (i < MAX_LINES); i++)
-    {
-        if (fgets(parser, sizeof(parser), fp) != NULL)
+        int *data = (int *)out_array;
+        char *endptr = NULL;
+        int check_value = 0;
+        while (fgets(line, sizeof(line), fp) && count < array_size)
         {
-            parser[strcspn(parser, "\n")] = 0;
+            line[strcspn(line, "\n")] = 0;
             errno = 0;
-            check_value = (int)strtol(parser, &endptr, 10);
-
+            check_value = (int)strtol(line, &endptr, 10);
             if (errno != 0)
             {
                 perror("strtol");
-                free(data);
-                exit(EXIT_FAILURE);
+                fclose(fp);
+                return -1;
+            }
+            if (endptr == line)
+            {
+                printf("Not a valid integer\n");
+            }
+            else if (*endptr != '\0')
+            {
+                printf("Valid number, but followed by non-numeric data\n");
+            }
+            else
+            {
+                data[count] = check_value;
+                count++;
             }
         }
-
-        if (endptr == parser)
-            printf("Not a valid integer\n");
-        else if (*endptr != '\0')
-            printf("Valid number, but followed by non-numeric data\n");
-        else
-        {
-            data[valid] = check_value;
-            valid++;
-        }
+    }
+    else
+    {
+        fprintf(stderr, "Unknown read mode\n");
+        fclose(fp);
+        return -1;
     }
 
     fclose(fp);
-    return data;
+    if (out_count)
+        *out_count = count;
+    return 0;
 }
+

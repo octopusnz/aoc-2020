@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 {
     int i = 0;
     int j = 0;
-    int k = 0;
     int total_valid = 0;
     int counter = 0;
     int real_lines = 0;
@@ -53,28 +52,38 @@ int main(int argc, char *argv[])
         {
             printf("Processing file: %s\n", argv[i]);
             files++;
+            real_lines = 0;
             total_valid = 0;
-            counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_ALNUM);
-            magic = read_file_to_array_alnum(argv[i], real_lines, &counter); 
-            if (!magic) {
-                fprintf(stderr, "Memory allocation failed \n");
+            counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_CUSTOM1);
+            magic = calloc(real_lines, sizeof(FileStore));
+            if (!magic)
+            {
+                fprintf(stderr, "Memory allocation failed for magic array\n");
                 exit(1);
-            }           
-
-            for (k = 0; k < counter; k++) {
-                if (is_letter_count_valid(magic[k])) {
+            }
+            counter = 0;
+            if (read_file_to_array(argv[i], real_lines, magic, &counter, READ_MODE_FILESTORE) != 0)
+            {
+                fprintf(stderr, "Error reading file into FileStore array\n");
+                free(magic);
+                exit(1);
+            }
+            for (j = 0; j < counter; j++)
+            {
+                if (is_letter_count_valid(magic[j]))
+                {
                     printf("Valid Entry %d: min=%d max=%d letter='%c' value=\"%s\"\n",
-                        k + 1, magic[k].min, magic[k].max, magic[k].letter, magic[k].value);
+                        j + 1, magic[j].min, magic[j].max, magic[j].letter, magic[j].value);
                     total_valid++;
                 }
             }
 
             printf("\nTotal Valid Entries: %d\n", total_valid);
-            free(magic);    
+            free(magic);
         }
         else
         {
-            printf("This file didn't exist or wasn't writeable  %s\n", argv[i]);
+            printf("This file didn't exist or wasn't readable  %s\n", argv[i]);
         }
     }
 

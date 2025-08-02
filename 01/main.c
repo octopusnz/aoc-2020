@@ -68,8 +68,21 @@ int main(int argc, char *argv[])
         {
             printf("Processing file: %s\n", argv[i]);
             files++;
+            real_lines = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_DIGIT);
-            magic = read_file_to_array(argv[i], real_lines, counter);
+            magic = calloc(real_lines, sizeof(int));
+            if (!magic)
+            {
+                fprintf(stderr, "Memory allocation failed for magic array\n");
+                exit(1);
+            }
+            counter = 0;
+            if (read_file_to_array(argv[i], real_lines, magic, &counter, READ_MODE_INT) != 0)
+            {
+                fprintf(stderr, "Error reading file into int array\n");
+                free(magic);
+                exit(1);
+            }
             large_int = find_max(magic, real_lines);
 
             printf("Finding triple using a HashTable...\n");
@@ -103,7 +116,8 @@ int main(int argc, char *argv[])
 
             printf("Finding numbers by sorting and then using two pointers...\n");
             unsorted = (int *)calloc(real_lines, sizeof(int));
-            if (!unsorted) {
+            if (!unsorted)
+            {
                 fprintf(stderr, "Memory allocation failed for unsorted array\n");
                 free(magic);
                 exit(1);
@@ -143,8 +157,7 @@ int main(int argc, char *argv[])
             strcpy(final_times[2].method, "Bubblesort:");
 
             time_size = sizeof(final_times) / sizeof(final_times[0]);
-            qsort(final_times, time_size, sizeof(Times),
-                  qsort_compare_time_struct);
+            qsort(final_times, time_size, sizeof(Times), qsort_compare_time_struct);
 
             printf("============================================\n");
             printf("Time summary based on approach:\n");
@@ -154,13 +167,13 @@ int main(int argc, char *argv[])
                        final_times[j].time * 1000);
             }
             printf("============================================\n");
-            counter = 0;
-            real_lines = 0;
             free(magic);
             free(unsorted);
         }
         else
+        {
             printf("This file didn't exist or wasn't writeable  %s\n", argv[i]);
+        }
     }
 
     if (files == 0)
