@@ -4,9 +4,28 @@
 #include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
 
+int is_position_valid(FileStore entry)
+{
+    int pos1 = entry.min - 1;
+    int pos2 = entry.max - 1;
+    int match1 = 0;
+    int match2 = 0;
+
+    if (pos1 >= 0 && entry.value[pos1] == entry.letter)
+    {
+        match1 = 1;
+    }
+
+    if (pos2 >= 0 && entry.value[pos2] == entry.letter)
+    {
+        match2 = 1;
+    }
+
+    return (match1 ^ match2); /* exclusive OR: valid if exactly one matches */
+}
+
 int qsort_compare_time_struct(const void *a, const void *b)
 {
-
     const Times *timeA = (const Times *)a;
     const Times *timeB = (const Times *)b;
 
@@ -43,7 +62,6 @@ void bubble_sort(int *array_name, int array_size)
     for (i = 0; i < array_size - 1; i++)
     {
         swapped = 0;
-
         for (j = 0; j < array_size - i - 1; j++)
         {
             if (array_name[j] > array_name[j + 1])
@@ -129,7 +147,8 @@ int find_max(int *array_name, int array_size)
 {
     int i = 0;
     int max_value = 0;
-    if (array_size <= 0) return 0;
+    if (array_size <= 0)
+        return 0;
     max_value = array_name[0];
     for (i = 1; i < array_size; i++)
     {
@@ -201,7 +220,7 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
         }
     }
 
-    printf("No triplet found");
+    printf("No triplet found\n");
     free(hashTable);
     return result;
 }

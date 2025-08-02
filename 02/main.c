@@ -29,7 +29,8 @@ int main(int argc, char *argv[])
 {
     int i = 0;
     int j = 0;
-    int total_valid = 0;
+    int letter_total_valid = 0;
+    int position_total_valid = 0;
     int counter = 0;
     int real_lines = 0;
     FileStore *magic = NULL;
@@ -53,13 +54,21 @@ int main(int argc, char *argv[])
             printf("Processing file: %s\n", argv[i]);
             files++;
             real_lines = 0;
-            total_valid = 0;
+            letter_total_valid = 0;
+            position_total_valid = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_CUSTOM1);
             if (counter == -1)
             {
                 fprintf(stderr, "Error counting lines in file: %s\n", argv[i]);
                 continue;
             }
+
+            if (real_lines == 0)
+            {
+                printf("File %s is empty or has no valid lines, skipping.\n", argv[i]);
+                continue;
+            }
+
             magic = calloc(real_lines, sizeof(FileStore));
             if (!magic)
             {
@@ -77,13 +86,17 @@ int main(int argc, char *argv[])
             {
                 if (is_letter_count_valid(magic[j]))
                 {
-                    printf("Valid Entry %d: min=%d max=%d letter='%c' value=\"%s\"\n",
-                        j + 1, magic[j].min, magic[j].max, magic[j].letter, magic[j].value);
-                    total_valid++;
+                    letter_total_valid++;
+                }
+                if (is_position_valid(magic[j]))
+                {
+                    position_total_valid++;
                 }
             }
 
-            printf("\nTotal Valid Entries: %d\n", total_valid);
+            printf("Total Letter Valid Entries: %d\n", letter_total_valid);
+            printf("Total Position Valid Entries: %d\n", position_total_valid);
+
             free(magic);
         }
         else

@@ -70,6 +70,16 @@ int main(int argc, char *argv[])
             files++;
             real_lines = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_DIGIT);
+            if (counter == -1)
+            {
+                fprintf(stderr, "Error counting lines in file: %s\n", argv[i]);
+                continue;
+            }
+            if (real_lines == 0)
+            {
+                printf("File %s is empty or has no valid lines, skipping.\n", argv[i]);
+                continue;
+            }
             magic = calloc(real_lines, sizeof(int));
             if (!magic)
             {
@@ -84,6 +94,12 @@ int main(int argc, char *argv[])
                 exit(1);
             }
             large_int = find_max(magic, real_lines);
+            if (large_int <= 0)
+            {
+                fprintf(stderr, "Error finding max integer in array\n");
+                free(magic);
+                exit(1);
+            }
 
             printf("Finding triple using a HashTable...\n");
             result3 = find_triple(magic, real_lines, large_int, target_num3);

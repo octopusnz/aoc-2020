@@ -66,4 +66,6 @@ ManyMatches find_triple_sorted(int *array_name, int array_size, int target_num);
 
 int is_letter_count_valid(FileStore entry);
 
+int is_position_valid(FileStore entry);
+
 #endif
