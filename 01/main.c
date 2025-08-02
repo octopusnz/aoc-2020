@@ -25,7 +25,7 @@ SOFTWARE. */
 #include <time.h>
 #include <unistd.h>
 
-#include "../libs/eight_algorithims.h"
+#include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
 
 int main(int argc, char *argv[])
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    for (i = 1; i < argc && i < MAX_FILES; ++i)
+    for (i = 1; i < argc && files < MAX_FILES; ++i)
     {
         if (access(argv[i], R_OK) == 0)
         {
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("This file didn't exist or wasn't writeable  %s\n", argv[i]);
+            printf("This file didn't exist or wasn't readable  %s\n", argv[i]);
         }
     }
 

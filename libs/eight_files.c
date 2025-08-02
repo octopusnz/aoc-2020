@@ -24,7 +24,7 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
     if (fp == NULL)
     {
         perror("Error opening file");
-        exit(1);
+        return -1;
     }
 
     while ((c = getc(fp)) != EOF && (count < MAX_LINES) && (char_count < MAX_CHARS))
@@ -130,7 +130,9 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
             int min, max;
             char letter;
             char value[MAX_LINE_LENGTH];
-            if (sscanf(line, "%d-%d %c: %s", &min, &max, &letter, value) == 4)
+            /* TO-DO: Replace sscanf? Buffer width is hard-coded.
+                Should be (MAX_LINE_LENGTH -1) */
+            if (sscanf(line, "%d-%d %c: %99s", &min, &max, &letter, value) == 4)
             {
                 entries[count].min = min;
                 entries[count].max = max;

@@ -5,7 +5,7 @@ F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
 VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
 GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
-SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithims.c
+SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithms.c
 
 .PHONY: test clean SOURCES
 

@@ -22,7 +22,7 @@ SOFTWARE. */
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../libs/eight_algorithims.h"
+#include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
 
 int main(int argc, char *argv[])
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    for (i = 1; i < argc && i < MAX_FILES; ++i)
+    for (i = 1; i < argc && files < MAX_FILES; ++i)
     {
         if (access(argv[i], R_OK) == 0)
         {
@@ -55,6 +55,11 @@ int main(int argc, char *argv[])
             real_lines = 0;
             total_valid = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_CUSTOM1);
+            if (counter == -1)
+            {
+                fprintf(stderr, "Error counting lines in file: %s\n", argv[i]);
+                continue;
+            }
             magic = calloc(real_lines, sizeof(FileStore));
             if (!magic)
             {

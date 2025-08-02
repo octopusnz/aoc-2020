@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../libs/eight_algorithims.h"
+#include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
 
 int qsort_compare_time_struct(const void *a, const void *b)
@@ -128,7 +128,9 @@ Matches find_pair_sorted(int *array_name, int array_size, int target_num)
 int find_max(int *array_name, int array_size)
 {
     int i = 0;
-    int max_value = array_name[0];
+    int max_value = 0;
+    if (array_size <= 0) return 0;
+    max_value = array_name[0];
     for (i = 1; i < array_size; i++)
     {
         if (array_name[i] > max_value)
@@ -176,7 +178,7 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
         {
             complement = current_target - array_name[j];
 
-            if (complement >= 0 && complement <= large_int && hashTable[complement])
+            if (complement >= 0 && complement < large_int + 1 && hashTable[complement])
             {
                 result.num1 = complement;
                 result.num2 = array_name[i];
@@ -208,6 +210,7 @@ Matches find_pair(int *array_name, int array_size, int large_int, int target_num
 {
     int *hashTable = (int *)calloc(large_int + 1, sizeof(int));
     int i = 0;
+    int complement = 0;
     Matches result = {0, 0, 0};
 
     if (!hashTable)
@@ -218,8 +221,8 @@ Matches find_pair(int *array_name, int array_size, int large_int, int target_num
 
     for (i = 0; i < array_size; i++)
     {
-        int complement = target_num - array_name[i];
-        if (hashTable[complement])
+        complement = target_num - array_name[i];
+        if (complement >= 0 && complement < large_int + 1 && hashTable[complement])
         {
             result.num1 = array_name[i];
             result.num2 = complement;
