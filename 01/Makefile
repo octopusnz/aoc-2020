@@ -7,18 +7,18 @@ GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
 SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithms.c
 
-.PHONY: test clean SOURCES
+.PHONY: test clean 
 
 test: 	latest $(INPUTS)
 	./asan.out $(INPUTS)
 	$(VAL_PATH) -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS)
 
 latest: $(SOURCES)
-	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(F_SANITIZE) -static-libasan -o asan.out
+	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) -static-libasan -o asan.out
 	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
 	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 
-clean:	gcc.out asan.out gmon.out clang.out
+clean:
 	rm gcc.out
 	rm asan.out
 	rm gmon.out
