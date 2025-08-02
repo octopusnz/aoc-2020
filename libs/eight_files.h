@@ -25,13 +25,18 @@ typedef struct {
     char letter;
 } FileStore;
 
+typedef enum {
+    LINE_MODE_DIGIT,
+    LINE_MODE_ALNUM
+} LineMode;
+
 /* Function definitions */
 
-int count_lines_in_file(const char *filepath, int *real_lines);
-int count_lines_in_file_alnum(const char *file_path, int *real_lines);
+
 int *read_file_to_array(const char *file_path, int array_size,
                         int total_lines_to_read);
 FileStore *read_file_to_array_alnum(const char *file_path, int array_size,
-                        int *counter);                      
+                        int *counter);       
+int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode);                             
 
 #endif

@@ -26,16 +26,3 @@ elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 return elapsed;
 }
 
-int qsort_compare_time_struct(const void *a, const void *b)
-{
-
-    const Times *timeA = (const Times *)a;
-    const Times *timeB = (const Times *)b;
-
-    if (timeA->time < timeB->time)
-        return -1;
-    else if (timeA->time > timeB->time)
-        return 1;
-    else
-        return 0;
-}

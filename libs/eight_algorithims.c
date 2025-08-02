@@ -4,6 +4,20 @@
 #include "../libs/eight_algorithims.h"
 #include "../libs/eight_files.h"
 
+int qsort_compare_time_struct(const void *a, const void *b)
+{
+
+    const Times *timeA = (const Times *)a;
+    const Times *timeB = (const Times *)b;
+
+    if (timeA->time < timeB->time)
+        return -1;
+    else if (timeA->time > timeB->time)
+        return 1;
+    else
+        return 0;
+}
+
 int is_letter_count_valid(FileStore entry)
 {
     int count = 0;

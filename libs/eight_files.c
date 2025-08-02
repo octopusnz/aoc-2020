@@ -6,7 +6,7 @@
 
 #include "../libs/eight_files.h"
 
-int count_lines_in_file_alnum(const char *file_path, int *real_lines)
+int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
 {
     FILE *fp = NULL;
     int c = 0;
@@ -27,101 +27,21 @@ int count_lines_in_file_alnum(const char *file_path, int *real_lines)
         exit(1);
     }
 
-    while ((c = getc(fp)) != EOF && (count < MAX_LINES) &&
-           (char_count < MAX_CHARS))
+    while ((c = getc(fp)) != EOF && (count < MAX_LINES) && (char_count < MAX_CHARS))
     {
-
-        if (isalnum(c) || c == ':' || c == '-' || c == ' ')
-        {
-            real_chars++;
-            real_char_count++;
+        int is_real = 0;
+        switch (mode) {
+            case LINE_MODE_ALNUM:
+                is_real = (isalnum(c) || c == ':' || c == '-' || c == ' ');
+                break;
+            case LINE_MODE_DIGIT:
+                is_real = isdigit(c);
+                break;
+            default:
+                is_real = 0;
         }
-        else if (c != '\n')
-        {
-            fake_chars++;
-            fake_char_count++;
-        }
-        else if ((c == '\n') && (real_chars > 0) && (fake_chars == 0))
-        {
-            count++;
-            total_count++;
-            fake_char_count++;
-            real_chars = 0;
-            fake_chars = 0;
-        }
-        else
-        {
-            total_count++;
-            real_chars = 0;
-            fake_chars = 0;
-            fake_char_count++;
-        }
-        char_count++;
-        pc = c;
-    }
 
-    if ((pc != '\n') && (real_chars > 0))
-    {
-        count++;
-        total_count++;
-    }
-
-    if (count >= MAX_LINES && c != EOF)
-    {
-        printf("We may have stopped processing this file part-way\n");
-        printf("We processed up to %d lines\n", total_count);
-    }
-
-    if (char_count >= MAX_CHARS && c != EOF)
-    {
-        printf("We may have stopped processing this file part-way\n");
-        printf("We processed up to %d characters\n", char_count);
-    }
-
-    if (real_char_count == 0)
-    {
-        printf("It looks like this was an empty file\n");
-        total_count = 0;
-    }
-
-    printf("Total Line Count is: %d\n", total_count);
-    printf("Real Line Count is: %d\n", count);
-    printf("Total Char Count is: %d\n", char_count);
-    printf("Real Char Count is: %d\n", real_char_count);
-
-    fclose(fp);
-
-    *real_lines = count;
-
-    return total_count;
-}
-
-int count_lines_in_file(const char *file_path, int *real_lines)
-{
-    FILE *fp = NULL;
-    int c = 0;
-    int pc = 0;
-    int count = 0;
-    int char_count = 0;
-    int real_chars = 0;
-    int real_char_count = 0;
-    int total_count = 0;
-    int fake_chars = 0;
-    int fake_char_count = 0;
-
-    fp = fopen(file_path, "r");
-
-    if (fp == NULL)
-    {
-        perror("Error opening file");
-        exit(1);
-    }
-
-    while ((c = getc(fp)) != EOF && (count < MAX_LINES) &&
-           (char_count < MAX_CHARS))
-    {
-
-        if (isdigit(c))
+        if (is_real)
         {
             real_chars++;
             real_char_count++;

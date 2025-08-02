@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
             printf("Processing file: %s\n", argv[i]);
             files++;
             total_valid = 0;
-            counter = count_lines_in_file_alnum(argv[i], &real_lines);
+            counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_ALNUM);
             magic = read_file_to_array_alnum(argv[i], real_lines, &counter); 
             if (!magic) {
                 fprintf(stderr, "Memory allocation failed \n");

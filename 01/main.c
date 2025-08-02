@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         {
             printf("Processing file: %s\n", argv[i]);
             files++;
-            counter = count_lines_in_file(argv[i], &real_lines);
+            counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_DIGIT);
             magic = read_file_to_array(argv[i], real_lines, counter);
             large_int = find_max(magic, real_lines);
 
