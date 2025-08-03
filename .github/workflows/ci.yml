@@ -27,7 +27,9 @@ jobs:
       shell: pwsh
       run: |
         "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
+        import module appx        
         get-appxpackage *appruntime*
+
  build:
     runs-on: ${{ matrix.os }}
     strategy:
