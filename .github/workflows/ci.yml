@@ -28,7 +28,7 @@ jobs:
       run: |
         "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
         $file1 = “C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h”
-        $file2 = “D:\a\aoc-2020\aoc-2020\docs\”
+        $file2 = “D:\a\aoc-2020\aoc-2020\docs\io.h”
 
         $hash1 = Get-FileHash $file1
         $hash2 = Get-FileHash $file2
