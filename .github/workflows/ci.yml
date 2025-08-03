@@ -27,38 +27,48 @@ jobs:
       shell: pwsh
       run: |
         "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
-         Copy-Item -Path “C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h” -Destination “D:\a\aoc-2020\aoc-2020\docs\”
+        $file1 = "C:\Path\To\File1.txt"
+        $file2 = "C:\Path\To\File2.txt"
 
+        $hash1 = Get-FileHash $file1
+        $hash2 = Get-FileHash $file2
+
+        if ($hash1.Hash -eq $hash2.Hash) {
+        Write-Host "The two files are identical."
+        } else {
+        Copy-Item -Path “C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h” -Destination “D:\a\aoc-2020\aoc-2020\docs\”
+        }         
+    
  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+  runs-on: ${{ matrix.os }}
+  strategy:
+   matrix:
+     os: [ubuntu-latest, macos-latest, windows-latest]
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup MSBuild (Windows)
-        if: runner.os == 'Windows'
-        uses: microsoft/setup-msbuild@v2
+    - name: Setup MSBuild (Windows)
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v2
 
-      - name: Compile (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          gcc -Wall -Wextra -std=c89 -Ilibs 01/main.c libs/*.c -o main01
-          gcc -Wall -Wextra -std=c89 -Ilibs 02/main.c libs/*.c -o main02
+    - name: Compile (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        gcc -Wall -Wextra -std=c89 -Ilibs 01/main.c libs/*.c -o main01
+        gcc -Wall -Wextra -std=c89 -Ilibs 02/main.c libs/*.c -o main02
 
-      - name: Compile (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          clang -Wall -Wextra -std=c89 -Ilibs 01/main.c libs/*.c -o main01
-          clang -Wall -Wextra -std=c89 -Ilibs 02/main.c libs/*.c -o main02
+    - name: Compile (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        clang -Wall -Wextra -std=c89 -Ilibs 01/main.c libs/*.c -o main01
+        clang -Wall -Wextra -std=c89 -Ilibs 02/main.c libs/*.c -o main02
 
-      - name: Compile (Windows)
-        if: runner.os == 'Windows'
-        shell: cmd
-        run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
-          cl /W4 /TC /Ilibs 01\main.c libs\*.c /Fe:main01.exe
-          cl /W4 /TC /Ilibs 02\main.c libs\*.c /Fe:main02.exe
+        - name: Compile (Windows)
+          if: runner.os == 'Windows'
+          shell: cmd
+          run: |
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
+            cl /W4 /TC /Ilibs 01\main.c libs\*.c /Fe:main01.exe
+            cl /W4 /TC /Ilibs 02\main.c libs\*.c /Fe:main02.exe
