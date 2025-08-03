@@ -35,6 +35,8 @@ jobs:
 
       - name: Compile (Windows)
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
+          call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           cl /W4 /TC /Ilibs 01\main.c libs\*.c /Fe:main01.exe
           cl /W4 /TC /Ilibs 02\main.c libs\*.c /Fe:main02.exe
