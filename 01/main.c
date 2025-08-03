@@ -23,7 +23,12 @@ SOFTWARE. */
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _WIN32
+#include <io.h>
+#define access _access
+#else
 #include <unistd.h>
+#endif
 
 #include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
