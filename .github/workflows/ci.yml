@@ -96,7 +96,8 @@ jobs:
           
           # Compose PR explanation
           $bodyText = "This PR includes updated headers detected from the Visual Studio SDK.\n\n"
-          $bodyText += "✅ Included updates: `"$($includedFiles -join '", "')"`"n"
+          $updatesJoined = $includedFiles -join '", '
+          $bodyText += "✅ Included updates: `"$updatesJoined`"`n"
           if ($blockedFiles.Count -gt 0) {
           $bodyText += "`n❌ Blocked files detected:`n"
           foreach ($file in $blockedFiles) {
