@@ -77,7 +77,7 @@ jobs:
             Write-Host "⚠️ Skipping PR #$($pr.number): no file data returned."
             continue
           }
-            
+          }  
           # 📂 Debug log: show each file path retrieved
           Write-Host "`n🔍 PR #$($pr.number) Files:"
           foreach ($path in $files) {
