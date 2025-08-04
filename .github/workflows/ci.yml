@@ -39,6 +39,8 @@ jobs:
           $repoDest = "D:\a\aoc-2020\aoc-2020\docs"
           $changedFiles = @{}
           $blockedFiles = @()
+          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+          $branchName = "io-upgrade-$timestamp"
           
           # Detect changed files and stage them
           foreach ($src in $targetFiles) {
@@ -84,7 +86,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git fetch origin
-          git checkout -B io-upgrade origin/master
+          git checkout -B $branchName origin/master
           
           foreach ($file in $includedFiles) {
             Copy-Item -Path $changedFiles[$file].Src -Destination $changedFiles[$file].Dest -Force
@@ -93,7 +95,7 @@ jobs:
           
           $commitTitle = "Header sync: $($includedFiles -join ', ')"
           git commit -m $commitTitle
-          git push -u origin io-upgrade --force
+          git push -u origin $branchName --force
           
           # Compose PR explanation
           $bodyText = "This PR includes updated headers detected from the Visual Studio SDK.\n\n"
@@ -108,7 +110,7 @@ jobs:
           
           gh pr create `
             --base master `
-            --head io-upgrade `
+            --head $branchName `
             --title $commitTitle `
             --body $bodyText
 
