@@ -38,9 +38,36 @@ jobs:
         if ($hash1.Hash -eq $hash2.Hash) {
         Write-Host "The two files are identical."
         } else {
-        Write-Host "New file found!"
-        Copy-Item -Path $file1 -Destination $file2
+        Write-Host "An updated io.h file has been found."
+        Write-Host "Checking if there is already a pending pull-request to merge this."
+        
         gh pr list --state open --json number,title,headRefName
+        
+        # Sample PR list
+        $prList = gh pr list --state open --json number,title,headRefName
+        $pullRequests = $prList | ConvertFrom-Json
+
+        # File you want to check
+        $TargetFile = "io.h"
+
+        # Loop through each PR
+        foreach ($pr in $pullRequests) {
+        $prNumber = $pr.number
+
+        # Get list of changed files in the PR
+        $changedFiles = gh pr view $prNumber --json files --jq '.files[].path' 2>$null
+
+        if ($changedFiles -match [regex]::Escape($TargetFile)) {
+        Write-Host "PR #$prNumber modified $TargetFile"
+        $fileWasModified = $true
+        } else {
+        Write-Host "PR #$prNumber did NOT modify $TargetFile"
+        if (-not $fileWasModified) {
+        Write-Host “Copying io.h to project folder”
+        Copy-Item -Path $file1 -Destination $file2
+        } 
+            }
+          }
         }         
     
  build:
