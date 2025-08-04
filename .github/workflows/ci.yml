@@ -64,8 +64,10 @@ jobs:
         Write-Host "PR #$prNumber did NOT modify $TargetFile"
         if (-not $fileWasModified) {
         Write-Host “Copying io.h to project folder”
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
         git checkout -b io-upgrade
-        Copy-Item -Path $file1 -Destination $file
+        Copy-Item -Path $file1 -Destination $file2
         git push -u origin io-upgrade
         git commit -m "io.h upgrade"
         git push
