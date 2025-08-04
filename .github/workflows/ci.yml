@@ -64,17 +64,30 @@ jobs:
         Write-Host "PR #$prNumber did NOT modify $TargetFile"
         if (-not $fileWasModified) {
         Write-Host “Copying io.h to project folder”
+        
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
-        git checkout -b io-upgrade
-        git pull
+
+        # Create or checkout the branch
+        git fetch origin
+        git checkout -B io-upgrade origin/master
+
+        # Make the change (copy the file)
         Copy-Item -Path $file1 -Destination $file2
-        git push -u origin io-upgrade
-        git add .        
+
+        # Check for changes
+        if (git diff --quiet) {
+        echo "No changes to commit. Skipping PR."
+        exit 0
+        }
+
+        # Commit and push
+        git add .
         git commit -m "io.h upgrade"
-        git push
-        gh pr create --base master --head io-upgrade --title “io.h upgrade” --body “Created automatically by GitHub Actions. A modified io.h version as part of Microsoft Visual Studio was detected on the most recent push.”
-        } 
+        git push -u origin io-upgrade 
+
+        # Create PR
+        gh pr create --base master --head io-upgrade --title "io.h upgrade" --body "Created automatically by GitHub Actions. A modified io.h version as part of Microsoft Visual Studio was detected on the most recent push."
             }
           }
         }         
