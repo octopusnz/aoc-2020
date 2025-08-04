@@ -31,66 +31,82 @@ jobs:
           # Load dev environment
           & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
 
-          $file1 = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h"
-          $file2 = "D:\a\aoc-2020\aoc-2020\docs\io.h"
-
-          $hash1 = Get-FileHash $file1
-          $hash2 = Get-FileHash $file2
-
-          if ($hash1.Hash -eq $hash2.Hash) {
-            Write-Host "The two files are identical. No action needed."
+          $targetFiles = @(
+          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h",
+          )
+          
+          $repoDest = "D:\a\aoc-2020\aoc-2020\docs"
+          $changedFiles = @{}
+          $blockedFiles = @()
+          
+          # Detect changed files and stage them
+          foreach ($src in $targetFiles) {
+            $fileName = Split-Path $src -Leaf
+            $dest = Join-Path $repoDest $fileName
+          
+            if ((Get-FileHash $src).Hash -ne (Get-FileHash $dest).Hash) {
+              $changedFiles[$fileName] = @{
+                Src = $src
+                Dest = $dest
+              }
+            }
+          }
+          
+          if ($changedFiles.Count -eq 0) {
+            Write-Host "No files changed. Skipping PR."
             exit 0
           }
-
-          Write-Host "An updated io.h file has been found. Checking open PRs..."
-
-          $prList = gh pr list --state open --json number,title,headRefName
+          
+          # Fetch open PRs and check for collisions
+          $prList = gh pr list --state open --json number
           $pullRequests = $prList | ConvertFrom-Json
-
-          $TargetFile = "io.h"
-          $fileWasModified = $false
-
+          
           foreach ($pr in $pullRequests) {
-            $prNumber = $pr.number
-            $changedFiles = gh pr view $prNumber --json files --jq '.files[].path' 2>$null
-
-            if ($changedFiles -match [regex]::Escape($TargetFile)) {
-              Write-Host "PR #$prNumber modified $TargetFile"
-              $fileWasModified = $true
-              break
+            $changedInPR = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
+            foreach ($file in $changedFiles.Keys) {
+              if ($changedInPR -match [regex]::Escape($file)) {
+                Write-Host "$file is modified in PR #$($pr.number). Skipping."
+                $blockedFiles += $file
+              }
             }
           }
-
-          if (-not $fileWasModified) {
-            Write-Host "No open PR modifies $TargetFile. Creating one."
-
-            git config user.name "github-actions"
-            git config user.email "github-actions@github.com"
-
-            git fetch origin
-            git checkout -B io-upgrade origin/master
-
-            # Copy the updated file
-            Copy-Item -Path $file1 -Destination $file2 -Force
-
-            # Check if there are changes
-            if (git diff --quiet) {
-              Write-Host "No actual file changes after copy. Skipping PR."
-              exit 0
-            }
-
-            git add $file2
-            git commit -m "io.h upgrade"
-            git push -u origin io-upgrade --force
-
-            gh pr create `
-              --base master `
-              --head io-upgrade `
-              --title "io.h upgrade" `
-              --body "Created automatically by GitHub Actions. A modified io.h version from Visual Studio SDK was detected."
-          } else {
-            Write-Host "A PR already modifies $TargetFile. No action taken."
+          
+          # Stage only the clean files
+          $includedFiles = $changedFiles.Keys | Where-Object { $blockedFiles -notcontains $_ }
+          
+          if ($includedFiles.Count -eq 0) {
+            Write-Host "All changed files are currently being modified in other PRs. Skipping new PR."
+            exit 0
           }
+          
+          # Setup Git and commit
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch origin
+          git checkout -B io-upgrade origin/master
+          
+          foreach ($file in $includedFiles) {
+            Copy-Item -Path $changedFiles[$file].Src -Destination $changedFiles[$file].Dest -Force
+            git add $changedFiles[$file].Dest
+          }
+          
+          $commitTitle = "Header sync: $($includedFiles -join ', ')"
+          git commit -m $commitTitle
+          git push -u origin io-upgrade --force
+          
+          # Compose PR explanation
+          $bodyText = "This PR includes updated headers detected from the Visual Studio SDK.\n\n"
+          $bodyText += "✅ Included updates: `"$($includedFiles -join '", "')"`\n"
+          if ($blockedFiles.Count -gt 0) {
+            $bodyText += "❌ Skipped updates due to existing PRs: `"$($blockedFiles -join '", "')"`\n"
+            $bodyText += "Those files are already being modified in other pull requests and were excluded to avoid conflicts."
+          }
+          
+          gh pr create `
+            --base master `
+            --head io-upgrade `
+            --title $commitTitle `
+            --body $bodyText
 
  build:
   runs-on: ${{ matrix.os }}
