@@ -9,89 +9,89 @@ on:
 jobs:
   
  headergrab:
-  runs-on: ${{ matrix.os }}
-  strategy:
-    matrix:
-      os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup MSBuild (Windows)
-      if: runner.os == 'Windows'
-      uses: microsoft/setup-msbuild@v2
+      - name: Setup MSBuild (Windows)
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Get SDK Version
-      if: runner.os == 'Windows'
-      env: 
-        GH_TOKEN: ${{ github.token }}
-      shell: pwsh
-      run: |
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
-        $file1 = “C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h”
-        $file2 = “D:\a\aoc-2020\aoc-2020\docs\io.h”
+      - name: Detect and PR io.h changes
+        if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          # Load dev environment
+          & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
 
-        $hash1 = Get-FileHash $file1
-        $hash2 = Get-FileHash $file2
+          $file1 = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h"
+          $file2 = "D:\a\aoc-2020\aoc-2020\docs\io.h"
 
-        if ($hash1.Hash -eq $hash2.Hash) {
-        Write-Host "The two files are identical."
-        } else {
-        Write-Host "An updated io.h file has been found."
-        Write-Host "Checking if there is already a pending pull-request to merge this."
-        
-        gh pr list --state open --json number,title,headRefName
-        
-        # Sample PR list
-        $prList = gh pr list --state open --json number,title,headRefName
-        $pullRequests = $prList | ConvertFrom-Json
+          $hash1 = Get-FileHash $file1
+          $hash2 = Get-FileHash $file2
 
-        # File you want to check
-        $TargetFile = "io.h"
+          if ($hash1.Hash -eq $hash2.Hash) {
+            Write-Host "The two files are identical. No action needed."
+            exit 0
+          }
 
-        # Loop through each PR
-        foreach ($pr in $pullRequests) {
-        $prNumber = $pr.number
+          Write-Host "An updated io.h file has been found. Checking open PRs..."
 
-        # Get list of changed files in the PR
-        $changedFiles = gh pr view $prNumber --json files --jq '.files[].path' 2>$null
+          $prList = gh pr list --state open --json number,title,headRefName
+          $pullRequests = $prList | ConvertFrom-Json
 
-        if ($changedFiles -match [regex]::Escape($TargetFile)) {
-        Write-Host "PR #$prNumber modified $TargetFile"
-        $fileWasModified = $true
-        } else {
-        Write-Host "PR #$prNumber did NOT modify $TargetFile"
-        if (-not $fileWasModified) {
-        Write-Host “Copying io.h to project folder”
-        
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
+          $TargetFile = "io.h"
+          $fileWasModified = $false
 
-        # Create or checkout the branch
-        git fetch origin
-        git checkout -B io-upgrade origin/master
+          foreach ($pr in $pullRequests) {
+            $prNumber = $pr.number
+            $changedFiles = gh pr view $prNumber --json files --jq '.files[].path' 2>$null
 
-        # Make the change (copy the file)
-        Copy-Item -Path $file1 -Destination $file2
-
-        # Check for changes
-        if (git diff --quiet) {
-        echo "No changes to commit. Skipping PR."
-        exit 0
-        }
-
-        # Commit and push
-        git add .
-        git commit -m "io.h upgrade"
-        git push -u origin io-upgrade 
-
-        # Create PR
-        gh pr create --base master --head io-upgrade --title "io.h upgrade" --body "Created automatically by GitHub Actions. A modified io.h version as part of Microsoft Visual Studio was detected on the most recent push."
+            if ($changedFiles -match [regex]::Escape($TargetFile)) {
+              Write-Host "PR #$prNumber modified $TargetFile"
+              $fileWasModified = $true
+              break
             }
           }
-        }         
-    
+
+          if (-not $fileWasModified) {
+            Write-Host "No open PR modifies $TargetFile. Creating one."
+
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+
+            git fetch origin
+            git checkout -B io-upgrade origin/master
+
+            # Copy the updated file
+            Copy-Item -Path $file1 -Destination $file2 -Force
+
+            # Check if there are changes
+            if (git diff --quiet) {
+              Write-Host "No actual file changes after copy. Skipping PR."
+              exit 0
+            }
+
+            git add $file2
+            git commit -m "io.h upgrade"
+            git push -u origin io-upgrade --force
+
+            gh pr create `
+              --base master `
+              --head io-upgrade `
+              --title "io.h upgrade" `
+              --body "Created automatically by GitHub Actions. A modified io.h version from Visual Studio SDK was detected."
+          } else {
+            Write-Host "A PR already modifies $TargetFile. No action taken."
+          }
+
  build:
   runs-on: ${{ matrix.os }}
   strategy:
