@@ -67,8 +67,10 @@ jobs:
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git checkout -b io-upgrade
+        git pull
         Copy-Item -Path $file1 -Destination $file2
         git push -u origin io-upgrade
+        git add .        
         git commit -m "io.h upgrade"
         git push
         gh pr create --base master --head io-upgrade --title “io.h upgrade” --body “Created automatically by GitHub Actions. A modified io.h version as part of Microsoft Visual Studio was detected on the most recent push.”
