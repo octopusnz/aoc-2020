@@ -22,102 +22,94 @@ jobs:
         if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v2
 
-      - name: Detect and PR io.h changes
+      - name: Detect and PR SDK header changes
         if: runner.os == 'Windows'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          # Load dev environment
+          # Load Visual Studio environment
           & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
-
+      
+          # Define source and destination files
           $targetFiles = @(
-          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h",
-          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_io.h"
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h",
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_io.h",
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\correct_io.h"
           )
-          
+      
           $repoDest = "D:\a\aoc-2020\aoc-2020\docs"
           $changedFiles = @{}
           $blockedFiles = @()
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-          $branchName = "io-upgrade-$timestamp"
-          
-          # Detect changed files and stage them
+          $branchName = "io-sync-$timestamp"
+      
+          # Step 1: Detect changes
           foreach ($src in $targetFiles) {
             $fileName = Split-Path $src -Leaf
             $dest = Join-Path $repoDest $fileName
-          
-            if ((Get-FileHash $src).Hash -ne (Get-FileHash $dest).Hash) {
-              $changedFiles[$fileName] = @{
-                Src = $src
-                Dest = $dest
-              }
+      
+            if (!(Test-Path $dest) -or (Get-FileHash $src).Hash -ne (Get-FileHash $dest).Hash) {
+              $changedFiles[$fileName] = @{ Src = $src; Dest = $dest }
             }
           }
-          
+      
           if ($changedFiles.Count -eq 0) {
-            Write-Host "No files changed. Skipping PR."
+            Write-Host "🚫 No file changes detected. Skipping PR."
             exit 0
           }
-          
-          # Fetch open PRs and check for collisions
-          $prList = gh pr list --state open --json number
-          $pullRequests = $prList | ConvertFrom-Json
-          
-          foreach ($pr in $pullRequests) {
-            $changedInPR = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
-            foreach ($file in $changedFiles.Keys) {
-              if ($changedInPR -match [regex]::Escape($file)) {
-                Write-Host "$file is modified in PR #$($pr.number). Skipping."
-                $blockedFiles += $file
-              }
+      
+          # Step 2: Detect blocked files in open PRs
+          $prList = gh pr list --state open --json number | ConvertFrom-Json
+          $blockedSet = New-Object System.Collections.Generic.HashSet[string]
+      
+          foreach ($pr in $prList) {
+            $files = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
+            foreach ($path in $files) {
+              $base = Split-Path $path -Leaf
+              $null = $blockedSet.Add($base.ToLower().Trim())
             }
           }
-          
-          Write-Host "🧾 Changed Files: $($changedFiles.Keys -join ', ')"
+      
+          $includedFiles = $changedFiles.Keys | Where-Object { -not $blockedSet.Contains($_.ToLower().Trim()) }
+      
+          # Step 3: Diagnostics
+          Write-Host "`n🧾 Changed Files: $($changedFiles.Keys -join ', ')"
           Write-Host "🚫 Blocked Files: $([string]::Join(', ', $blockedSet))"
-          Write-Host "✅ Included Files: $($includedFiles -join ', ')"
-          Write-Host "`n📦 Raw changed files: $($changedFiles.Keys -join ', ')"
-          Write-Host "🚫 Raw blocked files: $($blockedFiles -join ', ')"
-
-          # Stage only the clean files
-          $includedFiles = $changedFiles.Keys | Where-Object { $blockedFiles -notcontains $_ }
-          
+          Write-Host "✅ Included Files for PR: $($includedFiles -join ', ')`n"
+      
           if ($includedFiles.Count -eq 0) {
-            Write-Host "All changed files are currently being modified in other PRs. Skipping new PR."
+            Write-Host "✅ All changed files are already covered in open PRs. No new PR created."
             exit 0
           }
-          
-          # Setup Git and commit
+      
+          # Step 4: Prepare branch and commit
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git fetch origin
           git checkout -B $branchName origin/master
-          
+      
           foreach ($file in $includedFiles) {
             Copy-Item -Path $changedFiles[$file].Src -Destination $changedFiles[$file].Dest -Force
             git add $changedFiles[$file].Dest
           }
-          
-          $commitTitle = "Header sync: $($includedFiles -join ', ')"
-          git commit -m $commitTitle
+      
+          $commitMsg = "Header sync: $($includedFiles -join ', ')"
+          git commit -m $commitMsg
           git push -u origin $branchName --force
-          
-          # Compose PR explanation
-          $bodyText = "This PR includes updated headers detected from the Visual Studio SDK.\n\n"
-          $updatesJoined = $includedFiles -join '", '
-          $bodyText += "✅ Included updates: `"$updatesJoined`"`n"
-          if ($blockedFiles.Count -gt 0) {
-          $bodyText += "`n❌ Blocked files detected:`n"
-          foreach ($file in $blockedFiles) {
-          $bodyText += "$file`n"
-            }
+      
+          # Step 5: Create PR
+          $bodyText = "🔧 Automated header sync detected the following updates from Visual Studio SDK.\n\n"
+          $bodyText += "✅ Included files: `"$($includedFiles -join '", "')`"\n"
+          if ($blockedSet.Count -gt 0) {
+            $bodyText += "`n❌ Files already handled by other PRs:`n"
+            $bodyText += "$([string]::Join("`n", $blockedSet))"
           }
-          
+      
           gh pr create `
             --base master `
             --head $branchName `
-            --title $commitTitle `
+            --title $commitMsg `
             --body $bodyText
 
  build:
