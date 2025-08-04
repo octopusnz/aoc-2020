@@ -75,7 +75,7 @@ jobs:
           }
           
           Write-Host "🧾 Changed Files: $($changedFiles.Keys -join ', ')"
-          Write-Host "🚫 Blocked Files: $($blockedSet | ForEach-Object { $_ } -join ', ')"
+          Write-Host "🚫 Blocked Files: $([string]::Join(', ', $blockedSet))"
           Write-Host "✅ Included Files: $($includedFiles -join ', ')"
           Write-Host "`n📦 Raw changed files: $($changedFiles.Keys -join ', ')"
           Write-Host "🚫 Raw blocked files: $($blockedFiles -join ', ')"
