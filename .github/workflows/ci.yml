@@ -40,7 +40,7 @@ jobs:
         } else {
         Write-Host "New file found!"
         Copy-Item -Path $file1 -Destination $file2
-        $pullRequestData = gh pr list --state open --json number,title,headRefName
+        gh pr list --state open --json number,title,headRefName
         }         
     
  build:
