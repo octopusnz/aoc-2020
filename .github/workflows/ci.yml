@@ -72,37 +72,33 @@ jobs:
           # 🗃️ Retrieve files touched by this PR using jq for direct path extraction
           $files = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
             
-                # 🚦 Guard: skip PRs with no file data
-                if (-not $files -or $files.Count -eq 0) {
-                    Write-Host "⚠️ Skipping PR #$($pr.number): no file data returned."
-                    continue
-                }
+          # 🚦 Guard: skip PRs with no file data
+          if (-not $files -or $files.Count -eq 0) {
+            Write-Host "⚠️ Skipping PR #$($pr.number): no file data returned."
+            continue
+          }
             
-                # 📂 Debug log: show each file path retrieved
-                Write-Host "`n🔍 PR #$($pr.number) Files:"
-                foreach ($path in $files) {
-                    $base = Split-Path $path -Leaf
-                    $normalized = $base.ToLower().Trim()
+          # 📂 Debug log: show each file path retrieved
+          Write-Host "`n🔍 PR #$($pr.number) Files:"
+          foreach ($path in $files) {
+            $base = Split-Path $path -Leaf
+            $normalized = $base.ToLower().Trim()
+            Write-Host "📄 $normalized"
             
-                    Write-Host "📄 $normalized"
+            # ➕ Add to blocked set
+            $null = $blockedSet.Add($normalized)
+          }
             
-                    # ➕ Add to blocked set
-                    $null = $blockedSet.Add($normalized)
-                }
-            
-                # 📁 Show current state of blocked set
-                Write-Host "`n📁 Blocked Set Contents (so far):"
-                $blockedSet | Sort-Object | ForEach-Object { Write-Host "🔒 $_" }
-            }
-
+          # 📁 Show current state of blocked set
+          Write-Host "`n📁 Blocked Set Contents (so far):"
+          $blockedSet | Sort-Object | ForEach-Object { Write-Host "🔒 $_" }
           
-            Write-Host "`n🔍 Debugging File Inclusion Logic:"
-            $changedFiles.Keys | ForEach-Object {
-            $normalized = $_.ToLower().Trim()
-            $status = if ($blockedSet.Contains($normalized)) { "❌ Blocked" } else { "✅ Included" }
-            Write-Host "$_ → $status"
-            }
-
+          Write-Host "`n🔍 Debugging File Inclusion Logic:"
+          $changedFiles.Keys | ForEach-Object {
+          $normalized = $_.ToLower().Trim()
+          $status = if ($blockedSet.Contains($normalized)) { "❌ Blocked" } else { "✅ Included" }
+          Write-Host "$_ → $status"
+          }
 
           $includedFiles = $changedFiles.Keys | Where-Object { -not $blockedSet.Contains($_.ToLower().Trim()) }
       
@@ -139,8 +135,11 @@ jobs:
           "@
 
           if ($blockedSet.Count -gt 0) {
-            $bodyText += "`n❌ Files already handled by other PRs:`n"
-            $bodyText += "$([string]::Join("`n", $blockedSet))"
+            $bodyText = @"
+            ❌ Files already handled by other PRs:
+             
+            "$([string]::Join("`n", $blockedSet))"
+            "@
           }
       
           gh pr create `
