@@ -132,8 +132,12 @@ jobs:
           git push -u origin $branchName --force
       
           # Step 5: Create PR
-          $bodyText = "🔧 Automated header sync detected the following updates from Visual Studio SDK.\n\n"
-          $bodyText += "✅ Included files: `"$($includedFiles -join '", "')`"\n"
+          $bodyText = @"
+          🔧 Automated header sync detected the following updates from Visual Studio SDK.
+
+          ✅ Included files: "io.h", "corecrt_io.h"
+          "@
+
           if ($blockedSet.Count -gt 0) {
             $bodyText += "`n❌ Files already handled by other PRs:`n"
             $bodyText += "$([string]::Join("`n", $blockedSet))"
