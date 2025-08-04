@@ -62,6 +62,10 @@ jobs:
           $prList = gh pr list --state open --json number | ConvertFrom-Json
           $blockedSet = New-Object System.Collections.Generic.HashSet[string]
       
+          Write-Host "`n🔍 PR #$($pr.number) Files:"
+          $prData.files | ForEach-Object { Write-Host "📄 $($_.path)" }
+
+
           foreach ($pr in $prList) {
             $files = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
             foreach ($path in $files) {
