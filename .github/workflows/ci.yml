@@ -42,6 +42,7 @@ jobs:
         Copy-Item -Path $file1 -Destination $file2
         $pullRequestData = gh pr list --state open --json number,title,headRefName
         $pullRequestJson = $pullRequestData.value  
+        $pullRequestJson | Get-Member
         }         
     
  build:
