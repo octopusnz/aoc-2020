@@ -67,9 +67,12 @@ jobs:
             foreach ($path in $files) {
               $base = Split-Path $path -Leaf
               $null = $blockedSet.Add($base.ToLower().Trim())
+              Write-Host "`n📁 Blocked Set Contents:"
+              $blockedSet | Sort-Object | ForEach-Object { Write-Host "🔒 $_" }
+
             }
           }
-      
+          
             Write-Host "`n🔍 Debugging File Inclusion Logic:"
             $changedFiles.Keys | ForEach-Object {
             $normalized = $_.ToLower().Trim()
