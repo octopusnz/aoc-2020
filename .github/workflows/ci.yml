@@ -70,6 +70,14 @@ jobs:
             }
           }
       
+            Write-Host "`n🔍 Debugging File Inclusion Logic:"
+            $changedFiles.Keys | ForEach-Object {
+            $normalized = $_.ToLower().Trim()
+            $status = if ($blockedSet.Contains($normalized)) { "❌ Blocked" } else { "✅ Included" }
+            Write-Host "$_ → $status"
+            }
+
+
           $includedFiles = $changedFiles.Keys | Where-Object { -not $blockedSet.Contains($_.ToLower().Trim()) }
       
           # Step 3: Diagnostics
