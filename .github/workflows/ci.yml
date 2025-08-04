@@ -98,8 +98,10 @@ jobs:
           $bodyText = "This PR includes updated headers detected from the Visual Studio SDK.\n\n"
           $bodyText += "✅ Included updates: `"$($includedFiles -join '", "')"`\n"
           if ($blockedFiles.Count -gt 0) {
-            $bodyText += "❌ Skipped updates due to existing PRs: `"$($blockedFiles -join '", "')"`\n"
-            $bodyText += "Those files are already being modified in other pull requests and were excluded to avoid conflicts."
+          $bodyText += "`n❌ Blocked files detected:`n"
+          foreach ($file in $blockedFiles) {
+          $bodyText += "$file`n"
+            }
           }
           
           gh pr create `
