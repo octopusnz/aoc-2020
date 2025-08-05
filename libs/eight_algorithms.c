@@ -147,9 +147,11 @@ int find_max(int *array_name, int array_size)
 {
     int i = 0;
     int max_value = 0;
+    
     if (array_size <= 0)
         return 0;
     max_value = array_name[0];
+    
     for (i = 1; i < array_size; i++)
     {
         if (array_name[i] > max_value)
