@@ -41,7 +41,6 @@ jobs:
       
           $repoDest = "D:\a\aoc-2020\aoc-2020\docs"
           $changedFiles = @{}
-          $blockedFiles = @()
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $branchName = "io-sync-$timestamp"
       
@@ -61,45 +60,33 @@ jobs:
           }
       
           # Step 2: Detect blocked files in open PRs
-          # ⏳ Fetch open PRs by number
           $prList = gh pr list --state open --json number | ConvertFrom-Json
-
-          # 🔒 Initialize blocked set
           $blockedSet = New-Object System.Collections.Generic.HashSet[string]
             
-          # 🧠 Process each open PR individually
           foreach ($pr in $prList) {
             Write-Host "`n🔄 Fetching file list for PR #$($pr.number)..."
-            
-          # 🗃️ Retrieve files touched by this PR using jq for direct path extraction
-          $files = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
-            
-          # 🚦 Guard: skip PRs with no file data
-          if (-not $files -or $files.Count -eq 0) {
-            Write-Host "⚠️ Skipping PR #$($pr.number): no file data returned."
-            continue
-          }
-          }  
-          # 📂 Debug log: show each file path retrieved
-          Write-Host "`n🔍 PR #$($pr.number) Files:"
-          foreach ($path in $files) {
-            $base = Split-Path $path -Leaf
-            $normalized = $base.ToLower().Trim()
-            Write-Host "📄 $normalized"
-            
-            # ➕ Add to blocked set
-            $null = $blockedSet.Add($normalized)
+            $files = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
+            if (-not $files -or $files.Count -eq 0) {
+              Write-Host "⚠️ Skipping PR #$($pr.number): no file data returned."
+              continue
+            }
+            Write-Host "`n🔍 PR #$($pr.number) Files:"
+            foreach ($path in $files) {
+              $base = Split-Path $path -Leaf
+              $normalized = $base.ToLower().Trim()
+              Write-Host "📄 $normalized"
+              $null = $blockedSet.Add($normalized)
+            }
           }
             
-          # 📁 Show current state of blocked set
           Write-Host "`n📁 Blocked Set Contents (so far):"
           $blockedSet | Sort-Object | ForEach-Object { Write-Host "🔒 $_" }
           
           Write-Host "`n🔍 Debugging File Inclusion Logic:"
           $changedFiles.Keys | ForEach-Object {
-          $normalized = $_.ToLower().Trim()
-          $status = if ($blockedSet.Contains($normalized)) { "❌ Blocked" } else { "✅ Included" }
-          Write-Host "$_ → $status"
+            $normalized = $_.ToLower().Trim()
+            $status = if ($blockedSet.Contains($normalized)) { "❌ Blocked" } else { "✅ Included" }
+            Write-Host "$_ → $status"
           }
 
           $includedFiles = $changedFiles.Keys | Where-Object { -not $blockedSet.Contains($_.ToLower().Trim()) }
@@ -133,7 +120,7 @@ jobs:
           $bodyText = @"
           🔧 Automated header sync detected the following updates from Visual Studio SDK.
 
-          ✅ Included files: "io.h", "corecrt_io.h"
+          ✅ Included files: $($includedFiles -join ', ')
           "@
 
           if ($blockedSet.Count -gt 0) {
