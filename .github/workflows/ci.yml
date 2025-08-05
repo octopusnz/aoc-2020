@@ -167,3 +167,23 @@ jobs:
           "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
           cl /W4 /TC /Ilibs 01\main.c libs\*.c /Fe:main01.exe
           cl /W4 /TC /Ilibs 02\main.c libs\*.c /Fe:main02.exe
+
+  codeql:
+    name: "CodeQL"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+
+      - name: Build project
+        run: |
+          gcc -Wall -Wextra -std=c89 -Ilibs 01/main.c libs/*.c -o main01
+          gcc -Wall -Wextra -std=c89 -Ilibs 02/main.c libs/*.c -o main02
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
