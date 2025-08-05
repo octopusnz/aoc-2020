@@ -104,22 +104,21 @@ jobs:
             exit 0
           }
       
-          # Step 4: Prepare branch and commit
+          # Only create branch and PR if there are included files
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git fetch origin
           git checkout -B $branchName origin/master
-      
+
           foreach ($file in $includedFiles) {
             Copy-Item -Path $changedFiles[$file].Src -Destination $changedFiles[$file].Dest -Force
             git add $changedFiles[$file].Dest
           }
-      
+
           $commitMsg = "Header sync: $($includedFiles -join ', ')"
           git commit -m $commitMsg
           git push -u origin $branchName --force
-      
-          # Step 5: Create PR
+
           $bodyText = @"
           🔧 Automated header sync detected the following updates from Visual Studio SDK.
 
@@ -172,4 +171,3 @@ jobs:
           "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
           cl /W4 /TC /Ilibs 01\main.c libs\*.c /Fe:main01.exe
           cl /W4 /TC /Ilibs 02\main.c libs\*.c /Fe:main02.exe
-          
