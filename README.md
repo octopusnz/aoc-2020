@@ -34,7 +34,7 @@ For now this will spew a lot of debug and testing information to the console but
 
 3. Create one project that contains all the solutions. Maybe we have one main.c per solution and multiple Makefiles, or we try and incorporate it all together. To be determined as things evolve.
 
-4. As we solve problems, creature re-usable functions that can be placed into      library files for use in other problems and projects.
+4. As we solve problems, creature re-usable functions that can be placed into     library files for use in other problems and projects.
 
 5. Do our best to minimise memory allocation and usage. For example, try and use dynamic sizes rather than hardcoded static values.
 
