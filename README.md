@@ -36,7 +36,7 @@ For now this will spew a lot of debug and testing information to the console but
 
 4. As we solve problems, creature re-usable functions that can be placed into     library files for use in other problems and projects.
 
-5. Do our best to minimise memory allocation and usage. For example, try and use dynamic sizes rather than hardcoded static values.
+5. Do our best to minimise memory allocation and usage. For example, use dynamic sizes rather than hardcoded static values.
 
 6. Take the opportunity to learn maths and algorithms from the problems. For example if, we need to sort an array, implement several different sorts and learn the differences. 
 
