@@ -1,4 +1,6 @@
 name: Build C Project
+permissions:
+  contents: read
 
 on:
   push:
@@ -8,6 +10,9 @@ on:
 
 jobs:
   headergrab:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
