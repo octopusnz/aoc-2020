@@ -1,0 +1,39 @@
+# Root Makefile for Advent of Code 2020 in C
+# NOT YET FINISHED / WORKING. IN THE MEANTIME USE THE INDIVIDUAL MAKEFILES IN EACH PROBLEM FOLDER.
+
+CC = gcc
+CFLAGS = -Ilibs \
+         -pedantic \
+         -std=c89 \
+         -Wall \
+         -Werror=missing-braces \
+         -Wextra \
+         -Wpadded \
+         -Wduplicated-cond \
+         -Wduplicated-branches \
+         -Wshadow \
+         -Wstrict-prototypes \
+         -pg
+
+LIBS = libs/eight_files.c libs/eight_algorithms.c
+BIN_DIR = bin
+
+# Find all problem folders with main.c (e.g., 01/main.c, 02/main.c, ...)
+PROBLEMS := $(sort $(basename $(notdir $(wildcard ??/main.c))))
+EXES := $(addprefix $(BIN_DIR)/, $(PROBLEMS))
+
+.PHONY: all clean $(PROBLEMS) $(BIN_DIR)
+
+all: $(BIN_DIR) $(EXES)
+
+# Pattern rule: build each problem's executable
+$(BIN_DIR)/%: %/main.c $(LIBS)
+    $(CC) $(CFLAGS) $< $(LIBS) -o $@
+
+# Ensure bin directory exists
+$(BIN_DIR):
+    mkdir -p $(BIN_DIR)
+
+# Clean all built executables
+clean:
+    rm -rf $(BIN_DIR)
