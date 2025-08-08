@@ -38,4 +38,4 @@
 - Add SPDX-License-Identifier: MIT (see unity.c for an example)
 - Handle Microsoft header files and unity files (seperate LICENSE.txt in folders?)
 - Keep reviewing and updating README.md
-- Investigate AI copyright statement  
+- Investigate AI copyright statement 

@@ -26,6 +26,9 @@ SOFTWARE. */
 #ifdef _WIN32
 #include <io.h>
 #define access _access
+#ifndef R_OK
+#define R_OK 4
+#endif
 #else
 #include <unistd.h>
 #endif
@@ -58,12 +61,12 @@ int main(int argc, char *argv[])
 
     if (argc < 2)
     {
-        printf("Error: No input file specified\n");
+        fprintf(stderr, "Error: No input file specified\n");
         exit(1);
     }
     else if (argc > (MAX_FILES + 1))
     {
-        printf("Error: Too many arguments specified. Expected %d\n", MAX_FILES);
+        fprintf(stderr, "Error: Too many arguments specified. Expected %d\n", MAX_FILES);
         exit(1);
     }
 
@@ -72,7 +75,7 @@ int main(int argc, char *argv[])
         if (access(argv[i], R_OK) == 0)
         {
             printf("Processing file: %s\n", argv[i]);
-            files++;
+            // files++;  // move increment to the end after successful processing
             real_lines = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_DIGIT);
             if (counter == -1)
@@ -190,6 +193,7 @@ int main(int argc, char *argv[])
             printf("============================================\n");
             free(magic);
             free(unsorted);
+            files++;  // increment files here after successful processing
         }
         else
         {

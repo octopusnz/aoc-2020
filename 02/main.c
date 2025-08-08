@@ -19,8 +19,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
+
+#ifdef _WIN32
+#include <io.h>
+#define access _access
+#ifndef R_OK
+#define R_OK 4
+#endif
+#else
+#include <unistd.h>
+#endif
 
 #include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
@@ -38,12 +47,12 @@ int main(int argc, char *argv[])
 
     if (argc < 2)
     {
-        printf("Error: No input file specified\n");
+        fprintf(stderr, "Error: No input file specified\n");
         exit(1);
     }
     else if (argc > (MAX_FILES + 1))
     {
-        printf("Error: Too many arguments specified. Expected %d\n", MAX_FILES);
+        fprintf(stderr, "Error: Too many arguments specified. Expected %d\n", MAX_FILES);
         exit(1);
     }
 
@@ -52,7 +61,6 @@ int main(int argc, char *argv[])
         if (access(argv[i], R_OK) == 0)
         {
             printf("Processing file: %s\n", argv[i]);
-            files++;
             real_lines = 0;
             letter_total_valid = 0;
             position_total_valid = 0;
@@ -82,6 +90,7 @@ int main(int argc, char *argv[])
                 free(magic);
                 exit(1);
             }
+
             for (j = 0; j < counter; j++)
             {
                 if (is_letter_count_valid(magic[j]))
@@ -94,21 +103,26 @@ int main(int argc, char *argv[])
                 }
             }
 
-            printf("Total Letter Valid Entries: %d\n", letter_total_valid);
-            printf("Total Position Valid Entries: %d\n", position_total_valid);
+            printf("Total valid passwords (letter count): %d\n", letter_total_valid);
+            printf("Total valid passwords (position rule): %d\n", position_total_valid);
 
+            /* Free on successful path to avoid leaks */
             free(magic);
+            magic = NULL;
+
+            /* Count only successfully processed files (optional) */
+            files++;
         }
         else
         {
-            printf("This file didn't exist or wasn't readable  %s\n", argv[i]);
+            fprintf(stderr, "Cannot read file: %s\n", argv[i]);
         }
     }
 
     if (files == 0)
     {
-        printf("Looks like no valid files");
-        exit(1);
+        fprintf(stderr, "No valid files were processed.\n");
+        return 1;
     }
 
     return 0;
