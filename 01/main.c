@@ -75,7 +75,6 @@ int main(int argc, char *argv[])
         if (access(argv[i], R_OK) == 0)
         {
             printf("Processing file: %s\n", argv[i]);
-            // files++;  // move increment to the end after successful processing
             real_lines = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_DIGIT);
             if (counter == -1)
