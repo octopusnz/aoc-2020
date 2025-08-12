@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
             printf("============================================\n");
             free(magic);
             free(unsorted);
-            files++;  // increment files here after successful processing
+            files++;
         }
         else
         {
