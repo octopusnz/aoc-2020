@@ -197,14 +197,14 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("This file didn't exist or wasn't readable  %s\n", argv[i]);
+            fprintf(stderr, "This file didn't exist or wasn't readable: %s\n", argv[i]);
         }
     }
 
     if (files == 0)
     {
-        printf("Looks like no valid files");
-        exit(1);
+        fprintf(stderr, "Looks like no valid files\n");
+        return 1;
     }
 
     return 0;
