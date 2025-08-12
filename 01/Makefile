@@ -1,25 +1,43 @@
 INPUTS=sample.txt finaldata.txt test1.txt
+
+# Base flags
 GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
 CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
-F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
-VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
-GCC_PATH=/usr/bin/gcc
-CLANG_PATH=clang
-SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithms.c
 
-.PHONY: test clean 
+# Detect host OS
+UNAME_S := $(shell uname -s)
 
-test: 	latest $(INPUTS)
+# Default tool paths (overridable by environment)
+GCC_PATH ?= /usr/bin/gcc
+CLANG_PATH ?= clang
+
+# Sources
+SOURCES := main.c ../libs/eight_files.c ../libs/eight_algorithms.c
+
+# Sanitizer flags by OS
+ifeq ($(UNAME_S),Darwin)
+  # macOS + Apple Clang: no -fsanitize=leak, no static ASan
+  F_SANITIZE := -g -fno-omit-frame-pointer -fsanitize=address
+  STATIC_ASAN :=
+  # On macOS, /usr/bin/gcc is Clang; make that explicit to avoid surprises
+  GCC_PATH := clang
+else
+  # Linux (GCC/Clang): address + leak usually OK; static ASan only for GCC
+  F_SANITIZE := -g -fno-omit-frame-pointer -fsanitize=address -fsanitize=leak
+  # Static ASan can be flaky on some distros; leave enabled by default, override with STATIC_ASAN=
+  STATIC_ASAN := -static-libasan
+endif
+
+.PHONY: test clean latest
+
+test: latest $(INPUTS)
 	./asan.out $(INPUTS)
 	$(VAL_PATH) -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS)
 
 latest: $(SOURCES)
-	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) -static-libasan -o asan.out
+	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(STATIC_ASAN) -o asan.out
 	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
 	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 
 clean:
-	rm gcc.out
-	rm asan.out
-	rm gmon.out
-	rm clang.out
+	rm -f gcc.out asan.out gmon.out clang.out
