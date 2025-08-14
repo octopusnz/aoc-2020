@@ -17,7 +17,6 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
     int real_char_count = 0;
     int total_count = 0;
     int fake_chars = 0;
-    int fake_char_count = 0;
 
     fp = fopen(file_path, "r");
 
@@ -51,13 +50,11 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
         else if (c != '\n')
         {
             fake_chars++;
-            fake_char_count++;
         }
         else if ((c == '\n') && (real_chars > 0) && (fake_chars == 0))
         {
             count++;
             total_count++;
-            fake_char_count++;
             real_chars = 0;
             fake_chars = 0;
         }
@@ -66,7 +63,6 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
             total_count++;
             real_chars = 0;
             fake_chars = 0;
-            fake_char_count++;
         }
         char_count++;
         pc = c;
