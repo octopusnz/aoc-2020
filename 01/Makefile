@@ -45,5 +45,11 @@ TEST_SOURCES=$(UNITY_PATH) $(TEST_PATH) ../libs/eight_files.c ../libs/eight_algo
 
 unity: $(TEST_SOURCES) ; $(GCC_PATH) $(GCC_CFLAGS) $(TEST_SOURCES) -o unity.out
 
+# Coverage build for tests (Linux/GCC)
+unity-coverage: $(TEST_SOURCES)
+  $(GCC_PATH) -std=c89 -Wall -Wextra -O0 --coverage $(TEST_SOURCES) -o unity_coverage.out
+
 clean:
 	rm -f gcc.out asan.out gmon.out clang.out
+  rm -f unity.out unity_coverage.out
+  rm -f *.gcno *.gcda ../libs/*.gcno ../libs/*.gcda

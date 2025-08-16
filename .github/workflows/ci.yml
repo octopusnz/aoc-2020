@@ -212,3 +212,33 @@ jobs:
         run: |
           make -C 02 unity
           ./02/unity.out
+
+  coverage:
+    name: Code coverage (gcovr)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gcovr
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcovr
+      - name: Build coverage binaries and run tests
+        run: |
+          make -C 01 unity-coverage
+          ./01/unity_coverage.out || true
+          make -C 02 unity-coverage
+          ./02/unity_coverage.out || true
+      - name: Generate HTML report
+        run: |
+          gcovr -r . --html --html-details -o coverage.html \
+            --exclude-directories=.github \
+            --exclude=libs/unity/.* \
+            --exclude=docs/.*
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.html

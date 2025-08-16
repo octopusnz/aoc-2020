@@ -25,9 +25,14 @@ latest: $(SOURCES)
 unity: $(TEST_SOURCES)
 	$(GCC_PATH) $(GCC_CFLAGS) $(TEST_SOURCES) -o unity.out
 
+# Coverage build for tests (Linux/GCC)
+unity-coverage: $(TEST_SOURCES)
+	$(GCC_PATH) -std=c89 -Wall -Wextra -O0 --coverage $(TEST_SOURCES) -o unity_coverage.out
+
 clean:	
 	rm -f gcc.out
 	rm -f  asan.out
 	rm -f gmon.out
 	rm -f clang.out
-	rm -f unity.out
+	rm -f unity.out unity_coverage.out
+	rm -f *.gcno *.gcda ../libs/*.gcno ../libs/*.gcda

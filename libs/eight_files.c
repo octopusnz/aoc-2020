@@ -152,15 +152,14 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
             line[strcspn(line, "\n")] = 0;
             errno = 0;
             check_value = (int)strtol(line, &endptr, 10);
-            if (errno != 0)
-            {
-                perror("strtol");
-                fclose(fp);
-                return -1;
-            }
+            /* Treat no-conversion and out-of-range as invalid lines, not fatal errors */
             if (endptr == line)
             {
                 printf("Not a valid integer\n");
+            }
+            else if (errno == ERANGE)
+            {
+                fprintf(stderr, "Integer out of range: %s\n", line);
             }
             else if (*endptr != '\0')
             {

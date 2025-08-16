@@ -255,6 +255,28 @@ static void test_read_file_to_array_ints_all_invalid_lines_yields_zero_count(voi
     remove(fname);
 }
 
+static void test_read_file_to_array_ints_out_of_range_is_ignored(void)
+{
+    const char *fname = "tmp_ints_oor.txt";
+    FILE *fp;
+    int arr[4];
+    int out_count = -1;
+    int rc;
+    /* First a valid int, then a huge out-of-range number (should be ignored), then another valid int */
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("5\n", fp);
+    fputs("99999999999999999999999999999999999999999999\n", fp);
+    fputs("6\n", fp);
+    fclose(fp);
+    rc = read_file_to_array(fname, 4, arr, &out_count, READ_MODE_INT);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(2, out_count);
+    TEST_ASSERT_EQUAL_INT(5, arr[0]);
+    TEST_ASSERT_EQUAL_INT(6, arr[1]);
+    remove(fname);
+}
+
 static void test_read_file_to_array_nonexistent_returns_minus1(void)
 {
     int arr[1];
@@ -373,6 +395,7 @@ int main(void)
     RUN_TEST(test_read_file_to_array_ints);
     RUN_TEST(test_read_file_to_array_ints_respects_array_size_limit);
     RUN_TEST(test_read_file_to_array_ints_all_invalid_lines_yields_zero_count);
+    RUN_TEST(test_read_file_to_array_ints_out_of_range_is_ignored);
     RUN_TEST(test_read_file_to_array_nonexistent_returns_minus1);
     RUN_TEST(test_read_file_to_array_filestore_and_validate);
     RUN_TEST(test_read_file_to_array_filestore_respects_array_size_limit);

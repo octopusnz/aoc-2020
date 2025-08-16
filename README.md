@@ -1,5 +1,7 @@
 # Advent of Code: 2020 in C
 
+[![CI - Build C Project](https://github.com/octopusnz/aoc-2020/actions/workflows/ci.yml/badge.svg)](https://github.com/octopusnz/aoc-2020/actions/workflows/ci.yml)
+
 We are attempting to solve all of the 2020 Advent of Code problems in C.
 
 What is Advent of Code?
@@ -65,6 +67,18 @@ make -C 02 unity
 CI runs automatically via GitHub Actions in `.github/workflows/ci.yml`:
 - Builds the day binaries on Ubuntu, macOS, and Windows.
 - Runs the Unity test suites on Ubuntu and macOS.
+
+### Code coverage
+
+Generate coverage locally on Linux with GCC:
+
+```bash
+make -C 01 unity-coverage && ./01/unity_coverage.out
+make -C 02 unity-coverage && ./02/unity_coverage.out
+gcovr -r . --html --html-details -o coverage.html --exclude=libs/unity/.*
+```
+
+In CI, a coverage job runs on Ubuntu and uploads `coverage.html` as an artifact.
 
 ## License
 
