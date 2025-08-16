@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Error counting lines in file: %s\n", argv[i]);
                 continue; /* skip this file, don't abort whole program */
             }
-            if (real_lines == 0)
+            if (real_lines <= 0)
             {
                 printf("File %s is empty or has no valid lines, skipping.\n", argv[i]);
                 continue;
@@ -216,7 +216,9 @@ int main(int argc, char *argv[])
             }
             printf("============================================\n");
             free(magic);
+            magic = NULL;
             free(unsorted);
+            unsorted = NULL;
             files++;
         }
         else

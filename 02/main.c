@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            if (real_lines == 0)
+            if (real_lines <= 0)
             {
                 printf("File %s is empty or has no valid lines, skipping.\n", argv[i]);
                 continue;
@@ -88,7 +88,9 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr, "Error reading file into FileStore array\n");
                 free(magic);
-                exit(1);
+                magic = NULL;
+                /* Skip this file but continue processing others */
+                continue;
             }
 
             for (j = 0; j < counter; j++)
