@@ -228,14 +228,15 @@ jobs:
       - name: Build coverage binaries and run tests
         run: |
           make -C 01 unity-coverage
-          ./01/unity_coverage.out || true
+          ./01/unity_coverage.out
           make -C 02 unity-coverage
-          ./02/unity_coverage.out || true
+          ./02/unity_coverage.out
       - name: Generate HTML report
         run: |
           gcovr -r . --html --html-details -o coverage.html \
             --exclude-directories=.github \
             --exclude=libs/unity/.* \
+            --exclude=tests/.* \
             --exclude=docs/.*
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
