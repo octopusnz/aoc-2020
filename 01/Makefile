@@ -28,7 +28,7 @@ else
   STATIC_ASAN := -static-libasan
 endif
 
-.PHONY: test clean latest
+.PHONY: test clean latest unity
 
 test: latest $(INPUTS)
 	./asan.out $(INPUTS)
@@ -38,6 +38,12 @@ latest: $(SOURCES)
 	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(STATIC_ASAN) -o asan.out
 	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
 	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
+
+UNITY_PATH=../libs/unity/unity.c
+TEST_PATH=../tests/test.c
+TEST_SOURCES=$(UNITY_PATH) $(TEST_PATH) ../libs/eight_files.c ../libs/eight_algorithms.c
+
+unity: $(TEST_SOURCES) ; $(GCC_PATH) $(GCC_CFLAGS) $(TEST_SOURCES) -o unity.out
 
 clean:
 	rm -f gcc.out asan.out gmon.out clang.out

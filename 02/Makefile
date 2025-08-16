@@ -8,6 +8,7 @@ CLANG_PATH=clang
 UNITY_PATH=../libs/unity/unity.c
 TEST_PATH=../tests/test.c
 SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithms.c
+TEST_SOURCES:=$(UNITY_PATH) $(TEST_PATH) ../libs/eight_files.c ../libs/eight_algorithms.c
 
 .PHONY: test clean latest unity
 
@@ -21,8 +22,8 @@ latest: $(SOURCES)
 	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
 	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 
-unity: $(SOURCES) $(UNITY_PATH)
-	$(GCC_PATH) $(GCC_CFLAGS) $(UNITY_PATH) $(SOURCES) -o unity.out
+unity: $(TEST_SOURCES)
+	$(GCC_PATH) $(GCC_CFLAGS) $(TEST_SOURCES) -o unity.out
 
 clean:	
 	rm -f gcc.out

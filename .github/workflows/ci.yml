@@ -2,6 +2,10 @@ name: Build C Project
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ "**" ]
@@ -10,16 +14,20 @@ on:
 
 jobs:
   headergrab:
+    if: ${{ github.event_name == 'push' && github.repository_owner == 'octopusnz' }}
     permissions:
       contents: write
       pull-requests: write
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup MSBuild (Windows)
         if: runner.os == 'Windows'
@@ -31,9 +39,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          # Load Visual Studio environment
-          & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
-      
           # Define source and destination files
           $targetFiles = @(
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h",
@@ -41,17 +46,24 @@ jobs:
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_share.h",
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_wio.h"
           )
-      
-          $repoDest = "D:\a\aoc-2020\aoc-2020\docs"
+          
+          # Use the checked-out workspace for destination
+          $repoDest = Join-Path $env:GITHUB_WORKSPACE 'docs'
           $changedFiles = @{}
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $branchName = "io-sync-$timestamp"
+          $baseBranch = '${{ github.event.repository.default_branch }}'
       
           # Step 1: Detect changes
           foreach ($src in $targetFiles) {
             $fileName = Split-Path $src -Leaf
             $dest = Join-Path $repoDest $fileName
-      
+            
+            if (!(Test-Path $src)) {
+              Write-Host "⚠️ Source not found, skipping: $src"
+              continue
+            }
+
             if (!(Test-Path $dest) -or (Get-FileHash $src).Hash -ne (Get-FileHash $dest).Hash) {
               $changedFiles[$fileName] = @{ Src = $src; Dest = $dest }
             }
@@ -107,8 +119,8 @@ jobs:
           # Only create branch and PR if there are included files
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git fetch origin
-          git checkout -B $branchName origin/master
+          git fetch origin --no-tags
+          git checkout -B $branchName origin/$baseBranch
 
           foreach ($file in $includedFiles) {
             Copy-Item -Path $changedFiles[$file].Src -Destination $changedFiles[$file].Dest -Force
@@ -134,7 +146,7 @@ jobs:
           }
       
           gh pr create `
-            --base master `
+            --base $baseBranch `
             --head $branchName `
             --title $commitMsg `
             --body $bodyText
@@ -142,15 +154,22 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup MSBuild (Windows)
         if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v2
+
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Compile (Linux)
         if: runner.os == 'Linux'
@@ -168,6 +187,28 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
           cl /W4 /TC /Ilibs 01\main.c libs\*.c /Fe:main01.exe
           cl /W4 /TC /Ilibs 02\main.c libs\*.c /Fe:main02.exe
+
+  tests:
+    name: Build and run Unity tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and run tests (01)
+        run: |
+          make -C 01 unity
+          ./01/unity.out
+
+      - name: Build and run tests (02)
+        run: |
+          make -C 02 unity
+          ./02/unity.out

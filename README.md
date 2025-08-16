@@ -48,7 +48,23 @@ We develop using Visual Studio Code on Debian Linux and most testing and debuggi
 
 ## Automated Testing
 
-We would like to implement at least partial test coverage using the Unity framework: https://www.throwtheswitch.org/unity
+We use the Unity framework for unit tests: https://www.throwtheswitch.org/unity
+
+Run tests locally per day with:
+
+```bash
+# Day 01
+make -C 01 unity
+./01/unity.out
+
+# Day 02
+make -C 02 unity
+./02/unity.out
+```
+
+CI runs automatically via GitHub Actions in `.github/workflows/ci.yml`:
+- Builds the day binaries on Ubuntu, macOS, and Windows.
+- Runs the Unity test suites on Ubuntu and macOS.
 
 ## License
 
