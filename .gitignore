@@ -2,3 +2,5 @@
 \#*\#
 *.sublime-workspace
 .vscode/
+*.dSYM/
+bin/

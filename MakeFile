@@ -1,5 +1,4 @@
-# Root Makefile for Advent of Code 2020 in C
-# NOT YET FINISHED / WORKING. IN THE MEANTIME USE THE INDIVIDUAL MAKEFILES IN EACH PROBLEM FOLDER.
+## Root Makefile for Advent of Code 2020 in C
 
 CC = gcc
 CFLAGS = -Ilibs \
@@ -19,8 +18,16 @@ LIBS = libs/eight_files.c libs/eight_algorithms.c
 BIN_DIR = bin
 
 # Find all problem folders with main.c (e.g., 01/main.c, 02/main.c, ...)
-PROBLEMS := $(sort $(basename $(notdir $(wildcard ??/main.c))))
+PROBLEM_SRCS := $(wildcard [0-9][0-9]/main.c)
+PROBLEM_DIRS := $(sort $(dir $(PROBLEM_SRCS)))
+# Strip trailing slashes to get directory names like 01, 02, ...
+PROBLEMS := $(patsubst %/,%, $(PROBLEM_DIRS))
 EXES := $(addprefix $(BIN_DIR)/, $(PROBLEMS))
+
+# Debug (safe to keep; prints once during parse)
+$(info PROBLEM_SRCS=$(PROBLEM_SRCS))
+$(info PROBLEMS=$(PROBLEMS))
+$(info EXES=$(EXES))
 
 .PHONY: all clean $(PROBLEMS) $(BIN_DIR)
 
@@ -28,12 +35,12 @@ all: $(BIN_DIR) $(EXES)
 
 # Pattern rule: build each problem's executable
 $(BIN_DIR)/%: %/main.c $(LIBS)
-    $(CC) $(CFLAGS) $< $(LIBS) -o $@
+	$(CC) $(CFLAGS) $< $(LIBS) -o $@
 
 # Ensure bin directory exists
 $(BIN_DIR):
-    mkdir -p $(BIN_DIR)
+	mkdir -p $(BIN_DIR)
 
 # Clean all built executables
 clean:
-    rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR)
