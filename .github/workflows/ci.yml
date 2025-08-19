@@ -39,6 +39,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
+          # Fail fast and enable strict checks
+          $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+
           # Define source and destination files
           $targetFiles = @(
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h",
@@ -46,76 +50,80 @@ jobs:
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_share.h",
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_wio.h"
           )
-          
+
           # Use the checked-out workspace for destination
           $repoDest = Join-Path $env:GITHUB_WORKSPACE 'docs'
+          if (-not (Test-Path $repoDest)) { New-Item -ItemType Directory -Path $repoDest -Force | Out-Null }
+
           $changedFiles = @{}
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $branchName = "io-sync-$timestamp"
           $baseBranch = '${{ github.event.repository.default_branch }}'
-      
+
           # Step 1: Detect changes
           foreach ($src in $targetFiles) {
             $fileName = Split-Path $src -Leaf
             $dest = Join-Path $repoDest $fileName
-            
-            if (!(Test-Path $src)) {
-              Write-Host "⚠️ Source not found, skipping: $src"
+
+            if (-not (Test-Path $src)) {
+              Write-Host "Source not found, skipping: $src"
               continue
             }
 
-            if (!(Test-Path $dest) -or (Get-FileHash $src).Hash -ne (Get-FileHash $dest).Hash) {
+            $needsCopy = $false
+            if (-not (Test-Path $dest)) {
+              $needsCopy = $true
+            } else {
+              $srcHash = (Get-FileHash $src).Hash
+              $dstHash = (Get-FileHash $dest).Hash
+              if ($srcHash -ne $dstHash) { $needsCopy = $true }
+            }
+
+            if ($needsCopy) {
               $changedFiles[$fileName] = @{ Src = $src; Dest = $dest }
             }
           }
-      
+
           if ($changedFiles.Count -eq 0) {
-            Write-Host "🚫 No file changes detected. Skipping PR."
+            Write-Host 'No file changes detected. Skipping PR.'
             exit 0
           }
-      
+
           # Step 2: Detect blocked files in open PRs
           $prList = gh pr list --state open --json number | ConvertFrom-Json
+          if (-not $prList) { $prList = @() }
           $blockedSet = New-Object System.Collections.Generic.HashSet[string]
-            
+
           foreach ($pr in $prList) {
-            Write-Host "`n🔄 Fetching file list for PR #$($pr.number)..."
-            $files = gh pr view $pr.number --json files --jq '.files[].path' 2>$null
-            if (-not $files -or $files.Count -eq 0) {
-              Write-Host "⚠️ Skipping PR #$($pr.number): no file data returned."
+            try {
+              $prData = gh pr view $pr.number --json files | ConvertFrom-Json
+              $filePaths = @()
+              if ($prData -and $prData.files) {
+                $filePaths = @($prData.files | ForEach-Object { $_.path })
+              }
+              if (-not $filePaths -or $filePaths.Count -eq 0) { continue }
+              foreach ($path in $filePaths) {
+                $base = Split-Path $path -Leaf
+                $normalized = $base.ToLower().Trim()
+                [void]$blockedSet.Add($normalized)
+              }
+            } catch {
+              Write-Host "Warning: Unable to get files for PR #$($pr.number): $($_.Exception.Message)"
               continue
             }
-            Write-Host "`n🔍 PR #$($pr.number) Files:"
-            foreach ($path in $files) {
-              $base = Split-Path $path -Leaf
-              $normalized = $base.ToLower().Trim()
-              Write-Host "📄 $normalized"
-              $null = $blockedSet.Add($normalized)
-            }
-          }
-            
-          Write-Host "`n📁 Blocked Set Contents (so far):"
-          $blockedSet | Sort-Object | ForEach-Object { Write-Host "🔒 $_" }
-          
-          Write-Host "`n🔍 Debugging File Inclusion Logic:"
-          $changedFiles.Keys | ForEach-Object {
-            $normalized = $_.ToLower().Trim()
-            $status = if ($blockedSet.Contains($normalized)) { "❌ Blocked" } else { "✅ Included" }
-            Write-Host "$_ → $status"
           }
 
           $includedFiles = $changedFiles.Keys | Where-Object { -not $blockedSet.Contains($_.ToLower().Trim()) }
-      
-          # Step 3: Diagnostics
-          Write-Host "`n🧾 Changed Files: $($changedFiles.Keys -join ', ')"
-          Write-Host "🚫 Blocked Files: $([string]::Join(', ', $blockedSet))"
-          Write-Host "✅ Included Files for PR: $($includedFiles -join ', ')`n"
-      
+
+          Write-Host ("Changed files: {0}" -f ($changedFiles.Keys -join ', '))
+          Write-Host ("Blocked files: {0}" -f ([string]::Join(', ', $blockedSet)))
+          Write-Host ("Files to include in PR: {0}" -f ($includedFiles -join ', '))
+
           if ($includedFiles.Count -eq 0) {
-            Write-Host "✅ All changed files are already covered in open PRs. No new PR created."
+            Write-Host 'All changed files are already covered in open PRs. No new PR created.'
             exit 0
           }
-      
+
           # Only create branch and PR if there are included files
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -123,28 +131,30 @@ jobs:
           git checkout -B $branchName origin/$baseBranch
 
           foreach ($file in $includedFiles) {
-            Copy-Item -Path $changedFiles[$file].Src -Destination $changedFiles[$file].Dest -Force
-            git add $changedFiles[$file].Dest
+            $srcPath = $changedFiles[$file].Src
+            $dstPath = $changedFiles[$file].Dest
+            $dstDir  = Split-Path $dstPath -Parent
+            if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+            Copy-Item -Path $srcPath -Destination $dstPath -Force
+            git add $dstPath
           }
 
           $commitMsg = "Header sync: $($includedFiles -join ', ')"
           git commit -m $commitMsg
-          git push -u origin $branchName --force
+          git push -u origin $branchName
 
-          $bodyText = @"
-          🔧 Automated header sync detected the following updates from Visual Studio SDK.
-
-          ✅ Included files: $($includedFiles -join ', ')
-          "@
-
+          $includedList = ($includedFiles -join ', ')
+          $blockedList  = [string]::Join(', ', $blockedSet)
+          $bodyLines = @(
+            'Automated header sync detected updates from the Visual Studio SDK.',
+            '',
+            "Included files: $includedList"
+          )
           if ($blockedSet.Count -gt 0) {
-            $bodyText = @"
-            ❌ Files already handled by other PRs:
-             
-            "$([string]::Join("`n", $blockedSet))"
-          "@
+            $bodyLines += "Files already handled by other PRs: $blockedList"
           }
-      
+          $bodyText = $bodyLines -join "`n"
+
           gh pr create `
             --base $baseBranch `
             --head $branchName `
