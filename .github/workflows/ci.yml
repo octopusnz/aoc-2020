@@ -23,6 +23,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest]
+    env:
+      # set to "true" to enable committing files and creating a PR
+      COMMIT_HEADERS: "false"
+      # optional override for base branch
+      BASE_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,17 +38,15 @@ jobs:
         if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v2
 
-      - name: Detect and PR SDK header changes
+      - name: Detect and stage SDK files
         if: runner.os == 'Windows'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          # Fail fast and enable strict checks
           $ErrorActionPreference = 'Stop'
           Set-StrictMode -Version Latest
 
-          # Define source and destination files
           $targetFiles = @(
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\io.h",
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_io.h",
@@ -51,16 +54,14 @@ jobs:
             "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\SDK\ScopeCppSDK\vc15\SDK\include\ucrt\corecrt_wio.h"
           )
 
-          # Use the checked-out workspace for destination
           $repoDest = Join-Path $env:GITHUB_WORKSPACE 'docs'
           if (-not (Test-Path $repoDest)) { New-Item -ItemType Directory -Path $repoDest -Force | Out-Null }
 
           $changedFiles = @{}
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $branchName = "io-sync-$timestamp"
-          $baseBranch = '${{ github.event.repository.default_branch }}'
+          $baseBranch = $env:BASE_BRANCH
 
-          # Step 1: Detect changes
           foreach ($src in $targetFiles) {
             $fileName = Split-Path $src -Leaf
             $dest = Join-Path $repoDest $fileName
@@ -85,11 +86,10 @@ jobs:
           }
 
           if ($changedFiles.Count -eq 0) {
-            Write-Host 'No file changes detected. Skipping PR.'
+            Write-Host 'No file changes detected. Skipping PR/artifact.'
             exit 0
           }
 
-          # Step 2: Detect blocked files in open PRs
           $prList = gh pr list --state open --json number | ConvertFrom-Json
           if (-not $prList) { $prList = @() }
           $blockedSet = New-Object System.Collections.Generic.HashSet[string]
@@ -117,49 +117,66 @@ jobs:
 
           Write-Host ("Changed files: {0}" -f ($changedFiles.Keys -join ', '))
           Write-Host ("Blocked files: {0}" -f ([string]::Join(', ', $blockedSet)))
-          Write-Host ("Files to include in PR: {0}" -f ($includedFiles -join ', '))
+          Write-Host ("Files to stage: {0}" -f ($includedFiles -join ', '))
 
           if ($includedFiles.Count -eq 0) {
             Write-Host 'All changed files are already covered in open PRs. No new PR created.'
             exit 0
           }
 
-          # Only create branch and PR if there are included files
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git fetch origin --no-tags
-          git checkout -B $branchName origin/$baseBranch
-
+          # Copy included files into docs/ for artifact or commit
           foreach ($file in $includedFiles) {
             $srcPath = $changedFiles[$file].Src
             $dstPath = $changedFiles[$file].Dest
             $dstDir  = Split-Path $dstPath -Parent
             if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
             Copy-Item -Path $srcPath -Destination $dstPath -Force
-            git add $dstPath
           }
 
-          $commitMsg = "Header sync: $($includedFiles -join ', ')"
-          git commit -m $commitMsg
-          git push -u origin $branchName
+          # If COMMIT_HEADERS == "true", create branch, commit and open PR; otherwise leave files for artifact upload
+          $commitMode = $env:COMMIT_HEADERS -eq 'true'
+          if ($commitMode) {
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git fetch origin --no-tags
+            git checkout -B $branchName origin/$baseBranch
 
-          $includedList = ($includedFiles -join ', ')
-          $blockedList  = [string]::Join(', ', $blockedSet)
-          $bodyLines = @(
-            'Automated header sync detected updates from the Visual Studio SDK.',
-            '',
-            "Included files: $includedList"
-          )
-          if ($blockedSet.Count -gt 0) {
-            $bodyLines += "Files already handled by other PRs: $blockedList"
+            foreach ($file in $includedFiles) {
+              git add (Join-Path 'docs' $file)
+            }
+
+            $commitMsg = "Header sync: $($includedFiles -join ', ')"
+            git commit -m $commitMsg
+            git push -u origin $branchName
+
+            $includedList = ($includedFiles -join ', ')
+            $blockedList  = [string]::Join(', ', $blockedSet)
+            $bodyLines = @(
+              'Automated header sync detected updates from the Visual Studio SDK.',
+              '',
+              "Included files: $includedList"
+            )
+            if ($blockedSet.Count -gt 0) {
+              $bodyLines += "Files already handled by other PRs: $blockedList"
+            }
+            $bodyText = $bodyLines -join "`n"
+
+            gh pr create `
+              --base $baseBranch `
+              --head $branchName `
+              --title $commitMsg `
+              --body $bodyText
+            Write-Host "Created PR for updated headers: $branchName"
+          } else {
+            Write-Host "COMMIT_HEADERS != 'true' - header files staged to docs/ for artifact upload."
           }
-          $bodyText = $bodyLines -join "`n"
 
-          gh pr create `
-            --base $baseBranch `
-            --head $branchName `
-            --title $commitMsg `
-            --body $bodyText
+      - name: Upload staged headers (artifact)
+        if: ${{ env.COMMIT_HEADERS != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: header-files
+          path: docs/**
 
   build:
     runs-on: ${{ matrix.os }}
