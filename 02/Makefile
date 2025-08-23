@@ -1,7 +1,16 @@
 INPUTS=sample.txt finaldata.txt
 GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
 CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
-F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
+UNAME_S:=$(shell uname -s)
+# Address/Leak sanitizer flags differ by platform. macOS clang does not support
+# -fsanitize=leak as a separate flag nor linking a static libasan.
+ifeq ($(UNAME_S),Darwin)
+	F_SANITIZE=-g -fsanitize=address -fno-omit-frame-pointer
+	SAN_LIB_FLAG=
+else
+	F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
+	SAN_LIB_FLAG=-static-libasan
+endif
 VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
 GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
@@ -18,7 +27,7 @@ test: 	latest $(INPUTS)
 	
 
 latest: $(SOURCES)
-	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) -static-libasan -o asan.out
+	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(SAN_LIB_FLAG) -o asan.out
 	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
 	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 
