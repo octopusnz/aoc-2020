@@ -1,6 +1,5 @@
 ## Root Makefile for Advent of Code 2020 in C
 
-CC ?= cc
 # Common flags
 COMMON_CFLAGS = -Ilibs \
                  -pedantic \
@@ -8,7 +7,6 @@ COMMON_CFLAGS = -Ilibs \
                  -Wall \
                  -Werror=missing-braces \
                  -Wextra \
-                 -Wpadded \
                  -Wshadow \
                  -Wstrict-prototypes \
                  -pg
@@ -16,9 +14,7 @@ COMMON_CFLAGS = -Ilibs \
 # GCC-only warnings that clang doesn't support
 GCC_ONLY_CFLAGS = -Wduplicated-cond -Wduplicated-branches
 
-# Detect compiler and compose CFLAGS
-IS_CLANG := $(findstring clang,$(shell $(CC) --version 2>/dev/null | head -n1))
-# Clang-only flags (safe, minimal); extend if you want stricter clang checks
+# Clang-only flags
 CLANG_ONLY_CFLAGS = \
          -Wnewline-eof \
          -Wmissing-variable-declarations \
@@ -29,43 +25,70 @@ CLANG_ONLY_CFLAGS = \
 # Allow external overrides
 EXTRA_CFLAGS ?=
 
-ifeq ($(IS_CLANG),)
-    CFLAGS = $(COMMON_CFLAGS) $(GCC_ONLY_CFLAGS) $(EXTRA_CFLAGS)
-else
-    CFLAGS = $(COMMON_CFLAGS) $(CLANG_ONLY_CFLAGS) $(EXTRA_CFLAGS)
-endif
+CFLAGS_gcc   = $(COMMON_CFLAGS) $(GCC_ONLY_CFLAGS) $(EXTRA_CFLAGS)
+CFLAGS_clang = $(COMMON_CFLAGS) $(CLANG_ONLY_CFLAGS) $(EXTRA_CFLAGS)
 
 LIBS = libs/eight_files.c libs/eight_algorithms.c
 BIN_DIR = bin
+UNITY_PATH = libs/unity/unity.c
+TEST_PATH  = tests/test.c
+TEST_SOURCES = $(UNITY_PATH) $(TEST_PATH) $(LIBS)
 
-# Find all problem folders with main.c (e.g., 01/main.c, 02/main.c, ...)
+# Compilers to attempt
+COMPILERS := gcc clang
+AVAILABLE_COMPILERS := $(foreach C,$(COMPILERS),$(if $(shell command -v $(C) 2>/dev/null),$(C),))
+
+# Find all problem folders with main.c
 PROBLEM_SRCS := $(wildcard [0-9][0-9]/main.c)
 PROBLEM_DIRS := $(sort $(dir $(PROBLEM_SRCS)))
-# Strip trailing slashes to get directory names like 01, 02, ...
 PROBLEMS := $(patsubst %/,%, $(PROBLEM_DIRS))
-EXES := $(addprefix $(BIN_DIR)/, $(PROBLEMS))
 
-.PHONY: all clean $(PROBLEMS) $(BIN_DIR) clang gcc FORCE
+# Executables per available compiler
+EXES := $(foreach P,$(PROBLEMS),$(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$(P)-$(C)))
+
+.PHONY: all clean $(PROBLEMS) gcc clang unity
 
 all: $(BIN_DIR) $(EXES)
 
-# Force-compiler convenience targets
-clang: FORCE
-    $(MAKE) CC=clang all
+# Per-problem phony target builds all available compiler variants
+$(PROBLEMS):
+	@$(MAKE) $(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$@-$(C))
 
-gcc: FORCE
-    $(MAKE) CC=gcc all
+# Convenience targets for a single compiler
+gcc: $(filter %-gcc,$(EXES))
+	@if [ -z "$(filter gcc,$(AVAILABLE_COMPILERS))" ]; then echo "gcc not found"; exit 1; fi
 
-# Always-executed helper
-FORCE:
+clang: $(filter %-clang,$(EXES))
+	@if [ -z "$(filter clang,$(AVAILABLE_COMPILERS))" ]; then echo "clang not found"; exit 1; fi
 
-# Pattern rule: build each problem's executable
-$(BIN_DIR)/%: %/main.c $(LIBS)
-	$(CC) $(CFLAGS) $< $(LIBS) -o $@
+# Pattern rules per compiler
+$(BIN_DIR)/%-gcc: %/main.c $(LIBS) | $(BIN_DIR)
+	gcc $(CFLAGS_gcc) $< $(LIBS) -o $@
+
+$(BIN_DIR)/%-clang: %/main.c $(LIBS) | $(BIN_DIR)
+	clang $(CFLAGS_clang) $< $(LIBS) -o $@
 
 # Ensure bin directory exists
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
+
+# Unity test executables per compiler
+UNITY_EXES = $(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/unity-$(C))
+
+# Run unity tests automatically after building them
+unity test: $(UNITY_EXES)
+	@echo "Running Unity tests..."
+	@set -e; for exe in $(UNITY_EXES); do \
+		echo "==> $$exe"; \
+		./$$exe; \
+	done
+	@echo "All Unity tests completed."
+
+$(BIN_DIR)/unity-gcc: $(TEST_SOURCES) | $(BIN_DIR)
+	gcc $(CFLAGS_gcc) $(TEST_SOURCES) -o $@
+
+$(BIN_DIR)/unity-clang: $(TEST_SOURCES) | $(BIN_DIR)
+	clang $(CFLAGS_clang) $(TEST_SOURCES) -o $@
 
 # Clean all built executables
 clean:

@@ -1,3 +1,10 @@
+The following directories are excluded from the below LICENSE as they are the property of 3rd parties.
+Please check the files themselves for their respective copyrights and license details:
+
+1. All files contained in /libs/unity/
+    Unity Unit Testing: https://www.throwtheswitch.org/unity and
+    https://github.com/ThrowTheSwitch/Unity
+   
 Copyright 2025 Jacob Doherty
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files 
