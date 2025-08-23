@@ -11,7 +11,7 @@ else
 	F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
 	SAN_LIB_FLAG=-static-libasan
 endif
-VAL_PATH=/usr/local/valgrind-latest/bin/valgrind
+VAL_PATH=/usr/bin/valgrind
 GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
 UNITY_PATH=../libs/unity/unity.c

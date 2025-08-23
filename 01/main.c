@@ -118,8 +118,7 @@ int main(int argc, char *argv[])
 
             /* Guard against pathological max values causing huge allocations in hash-based methods */
             {
-                const int LARGE_INT_CAP = 10000000; /* 10 million */
-                if (large_int > LARGE_INT_CAP)
+                if (large_int > MAX_INT_VALUE)
                 {
                     fprintf(stderr, "Max value %d too large, skipping hash-based methods for %s.\n", large_int, argv[i]);
                 }

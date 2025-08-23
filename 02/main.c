@@ -81,12 +81,12 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            /* Guard against multiplication overflow in calloc arguments */
-            if (real_lines < 0 || (size_t)real_lines > SIZE_MAX / sizeof(FileStore))
+            /* Guard against multiplication overflow in calloc arguments  -- Refactor this cruft
+            if (real_lines < 0 || (size_t)real_lines > MAX_INT_VALUE)
             {
                 fprintf(stderr, "Refusing to allocate %d elements (overflow risk)\n", real_lines);
                 continue;
-            }
+            } */
 
             magic = calloc((size_t)real_lines, sizeof(FileStore));
             if (!magic)
@@ -144,8 +144,8 @@ int main(int argc, char *argv[])
 
     if (files > 1)
     {
-        printf("Aggregated valid passwords across %d files (letter count): %d\n", files, letter_total_valid_all);
-        printf("Aggregated valid passwords across %d files (position rule): %d\n", files, position_total_valid_all);
+        printf("Aggregated valid strings across %d files (letter count): %d\n", files, letter_total_valid_all);
+        printf("Aggregated valid strings across %d files (position rule): %d\n", files, position_total_valid_all);
     }
 
     return 0;

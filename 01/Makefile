@@ -10,6 +10,7 @@ UNAME_S := $(shell uname -s)
 # Default tool paths (overridable by environment)
 GCC_PATH ?= /usr/bin/gcc
 CLANG_PATH ?= clang
+VAL_PATH ?= /usr/bin/valgrind
 
 # Sources
 SOURCES := main.c ../libs/eight_files.c ../libs/eight_algorithms.c
