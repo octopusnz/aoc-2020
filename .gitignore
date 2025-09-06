@@ -4,3 +4,5 @@
 .vscode/
 *.dSYM/
 bin/
+.DS_Store
+  
