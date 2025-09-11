@@ -12,7 +12,8 @@ COMMON_CFLAGS = -Ilibs \
                  -pg
 
 # GCC-only warnings that clang doesn't support
-GCC_ONLY_CFLAGS = -Wduplicated-cond -Wduplicated-branches
+GCC_ONLY_CFLAGS = -Wduplicated-cond \
+                  -Wduplicated-branches
 
 # Clang-only flags
 CLANG_ONLY_CFLAGS = \
