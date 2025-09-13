@@ -1,8 +1,6 @@
 # Advent of Code: 2020 in C
 
-[![CI - Build C Project](https://github.com/octopusnz/aoc-2020/actions/workflows/ci.yml/badge.svg)](https://github.com/octopusnz/aoc-2020/actions/workflows/ci.yml)
-
-[![Octopus Powered](https://img.shields.io/badge/powered%20by-octopusnz%20🦑-blue)](https://github.com/octopusnz)
+[![CI - Build C Project](https://github.com/octopusnz/aoc-2020/actions/workflows/ci.yml/badge.svg)](https://github.com/octopusnz/aoc-2020/actions/workflows/ci.yml)[![Octopus Powered](https://img.shields.io/badge/Powered%20by-octopusnz%20🦑-blue)](https://github.com/octopusnz)
 
 We are attempting to solve all of the 2020 Advent of Code problems in C.
 
