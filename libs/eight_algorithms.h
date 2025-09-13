@@ -1,9 +1,12 @@
-/*
-Filename: eight_algorithms.h
-Child files: eight_algorithms.c
-
-Contains useful utilities for working with datasets and sorting
-*/
+/* ==========================================================================
+    OctoLibC - A small C library for common tasks
+    Version: 0.0.1
+    https://github.com/octopusnz/octolibc
+    Copyright (c) 2025 Jacob Doherty
+    SPDX-License-Identifier: MIT
+    File: eight_algorithms.h
+    Description: Contains useful utilities for working with datasets and sorting
+============================================================================= */
 
 #ifndef EIGHT_ALGORITHMS_H
 #define EIGHT_ALGORITHMS_H

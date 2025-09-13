@@ -1,3 +1,12 @@
+/* ==========================================================================
+    OctoLibC - A small C library for common tasks
+    https://github.com/octopusnz/octolibc
+    Copyright (c) 2025 Jacob Doherty
+    SPDX-License-Identifier: MIT
+    File: eight_algorithms.c
+    Description: Contains useful utilities for working with datasets and sorting
+============================================================================= */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

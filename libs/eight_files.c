@@ -1,3 +1,14 @@
+/* ==========================================================================
+    OctoLibC - A small C library for common tasks
+    Version: 0.0.1
+    https://github.com/octopusnz/octolibc
+    Copyright (c) 2025 Jacob Doherty
+    SPDX-License-Identifier: MIT
+    File: eight_files.c
+    Description: Contains useful utilities for reading files and parsing data
+============================================================================= */
+
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>

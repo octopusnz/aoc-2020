@@ -1,9 +1,12 @@
-/*
-Filename: eight_files.h
-Child files: eight_files.c
-
-Contains useful utilities for working with files and validating the contents
-*/
+/* ==========================================================================
+    OctoLibC - A small C library for common tasks
+    Version: 0.0.1
+    https://github.com/octopusnz/octolibc
+    Copyright (c) 2025 Jacob Doherty
+    SPDX-License-Identifier: MIT
+    File: eight_files.h
+    Description: Contains useful utilities for reading files and parsing data
+============================================================================= */
 
 #ifndef EIGHT_FILES_H
 #define EIGHT_FILES_H
