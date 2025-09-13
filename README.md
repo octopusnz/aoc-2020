@@ -6,31 +6,31 @@ We are attempting to solve all of the 2020 Advent of Code problems in C.
 
 What is Advent of Code?
 
-https://adventofcode.com/
+<https://adventofcode.com/>
 
-Advent of Code is an annual programming event that runs from December 1st to 25th. It features a series of daily coding puzzles, each with two parts, designed to be solved using any programming language. 
+Advent of Code is an annual programming event that runs from December 1st to 25th. It features a series of daily coding puzzles, each with two parts, designed to be solved using any programming language.
 
 Each of the problems/solutions is organised into folders i.e 01/ corresponds to the Day 01 problem. Generally there are two sets of input data, which are uniquely generated for each AOC user. sample.txt is a short set of data to help test implementation and finaldata.txt is a large data set used in both problems posed each day.
 
 ## Setup and Running
 
-To set up you can clone the repo and then navigate to a particular day's problem 
-i.e 01, 02 etc. You can of course use the C compiler of your choice to manually compile the code, then run the executable and specify an input file i.e 
+To set up you can clone the repo and then navigate to a particular day's problem
+i.e 01, 02 etc. You can of course use the C compiler of your choice to manually compile the code, then run the executable and specify an input file i.e
 `./main finaldata.txt`
 
 Otherwise you can use the Makefiles and run `make`.
 
 Currently the Makefiles depend on:
 
-Make:   https://www.gnu.org/software/make/
-GCC:    https://gcc.gnu.org/ 
-Clang:  https://clang.llvm.org/
+Make:   <https://www.gnu.org/software/make/>
+GCC:    <https://gcc.gnu.org/>
+Clang:  <https://clang.llvm.org/>
 
 For now this will spew a lot of debug and testing information to the console but it's automatically taking the input files (sample.txt and finaldata.txt) and reading them into the program to generate the solutions. Eventually we will refactor the Makefiles to not create test and debug output by default and create an optimised version of the binary.
 
 ## Thinking and Goals
 
-1. Use the C89 C standard: https://en.wikipedia.org/wiki/ANSI_C
+1. Use the C89 C standard: <https://en.wikipedia.org/wiki/ANSI_C>
 
 2. Allow for cross platform compilation for Windows, MacOS and Linux.
 
@@ -40,7 +40,7 @@ For now this will spew a lot of debug and testing information to the console but
 
 5. Do our best to minimise memory allocation and usage. For example, use dynamic sizes rather than hardcoded static values.
 
-6. Take the opportunity to learn maths and algorithms from the problems. For example if, we need to sort an array, implement several different sorts and learn the differences. 
+6. Take the opportunity to learn maths and algorithms from the problems. For example if, we need to sort an array, implement several different sorts and learn the differences.
 
 7. Have fun and learn more C.
 
@@ -50,7 +50,7 @@ We develop using Visual Studio Code on Debian Linux and most testing and debuggi
 
 ## Automated Testing
 
-We use the Unity framework for unit tests: https://www.throwtheswitch.org/unity
+We use the Unity framework for unit tests: <https://www.throwtheswitch.org/unity>
 
 Run tests locally per day with:
 
@@ -65,6 +65,7 @@ make -C 02 unity
 ```
 
 CI runs automatically via GitHub Actions in `.github/workflows/ci.yml`:
+
 - Builds the day binaries on Ubuntu, macOS, and Windows.
 - Runs the Unity test suites on Ubuntu and macOS.
 
