@@ -5,4 +5,6 @@
 *.dSYM/
 bin/
 .DS_Store
-  
+*.s
+*.o
+*.a  

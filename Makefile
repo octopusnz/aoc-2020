@@ -34,10 +34,32 @@ BIN_DIR = bin
 UNITY_PATH = libs/unity/unity.c
 TEST_PATH  = tests/test.c
 TEST_SOURCES = $(UNITY_PATH) $(TEST_PATH) $(LIBS)
+# Preferred compiler commands (can be overridden at invocation)
+GCC_COMPILER ?= gcc-latest
+CLANG_COMPILER ?= clang-latest
+
+# Detect available compiler commands with fallback to standard names
+GCC_CANDIDATES   := $(GCC_COMPILER) gcc
+CLANG_CANDIDATES := $(CLANG_COMPILER) clang
+
+DETECTED_GCC   := $(firstword $(foreach c,$(GCC_CANDIDATES),$(if $(shell command -v $(c) 2>/dev/null),$(c))))
+DETECTED_CLANG := $(firstword $(foreach c,$(CLANG_CANDIDATES),$(if $(shell command -v $(c) 2>/dev/null),$(c))))
+
+# Environment overrides for command paths (shells can't export vars with dots)
+ENV_COMPILER_CMD_GCC   := $(or $(COMPILER_cmd_gcc),$(COMPILER_CMD_GCC))
+ENV_COMPILER_CMD_CLANG := $(or $(COMPILER_cmd_clang),$(COMPILER_CMD_CLANG))
 
 # Compilers to attempt
-COMPILERS := gcc clang
-AVAILABLE_COMPILERS := $(foreach C,$(COMPILERS),$(if $(shell command -v $(C) 2>/dev/null),$(C),))
+# Stable labels for file suffixes
+GCC_LABEL := gcc
+CLANG_LABEL := clang
+
+# Available compilers (by label) and their commands
+COMPILER_cmd.gcc ?= $(ENV_COMPILER_CMD_GCC)
+COMPILER_cmd.gcc ?= $(DETECTED_GCC)
+COMPILER_cmd.clang ?= $(ENV_COMPILER_CMD_CLANG)
+COMPILER_cmd.clang ?= $(DETECTED_CLANG)
+AVAILABLE_COMPILERS := $(strip $(if $(COMPILER_cmd.gcc),$(GCC_LABEL)) $(if $(COMPILER_cmd.clang),$(CLANG_LABEL)))
 
 # Find all problem folders with main.c
 PROBLEM_SRCS := $(wildcard [0-9][0-9]/main.c)
@@ -47,7 +69,7 @@ PROBLEMS := $(patsubst %/,%, $(PROBLEM_DIRS))
 # Executables per available compiler
 EXES := $(foreach P,$(PROBLEMS),$(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$(P)-$(C)))
 
-.PHONY: all clean $(PROBLEMS) gcc clang unity
+.PHONY: all clean $(PROBLEMS) gcc clang unity test
 
 all: $(BIN_DIR) $(EXES)
 
@@ -56,18 +78,18 @@ $(PROBLEMS):
 	@$(MAKE) $(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$@-$(C))
 
 # Convenience targets for a single compiler
-gcc: $(filter %-gcc,$(EXES))
-	@if [ -z "$(filter gcc,$(AVAILABLE_COMPILERS))" ]; then echo "gcc not found"; exit 1; fi
+gcc: $(filter %-$(GCC_LABEL),$(EXES))
+	@if [ -z "$(COMPILER_cmd.$(GCC_LABEL))" ]; then echo "gcc not available"; exit 1; fi
 
-clang: $(filter %-clang,$(EXES))
-	@if [ -z "$(filter clang,$(AVAILABLE_COMPILERS))" ]; then echo "clang not found"; exit 1; fi
+clang: $(filter %-$(CLANG_LABEL),$(EXES))
+	@if [ -z "$(COMPILER_cmd.$(CLANG_LABEL))" ]; then echo "clang not available"; exit 1; fi
 
 # Pattern rules per compiler
-$(BIN_DIR)/%-gcc: %/main.c $(LIBS) | $(BIN_DIR)
-	gcc $(CFLAGS_gcc) $< $(LIBS) -o $@
+$(BIN_DIR)/%-$(GCC_LABEL): %/main.c $(LIBS) | $(BIN_DIR)
+	$(COMPILER_cmd.$(GCC_LABEL)) $(CFLAGS_gcc) $< $(LIBS) -o $@
 
-$(BIN_DIR)/%-clang: %/main.c $(LIBS) | $(BIN_DIR)
-	clang $(CFLAGS_clang) $< $(LIBS) -o $@
+$(BIN_DIR)/%-$(CLANG_LABEL): %/main.c $(LIBS) | $(BIN_DIR)
+	$(COMPILER_cmd.$(CLANG_LABEL)) $(CFLAGS_clang) $< $(LIBS) -o $@
 
 # Ensure bin directory exists
 $(BIN_DIR):
@@ -84,12 +106,14 @@ unity test: $(UNITY_EXES)
 		./$$exe; \
 	done
 	@echo "All Unity tests completed."
+	@if [ -n "$(COMPILER_cmd.$(GCC_LABEL))" ]; then echo "GCC Version Used: $$($(COMPILER_cmd.$(GCC_LABEL)) --version | head -n 1)"; fi
+	@if [ -n "$(COMPILER_cmd.$(CLANG_LABEL))" ]; then echo "Clang Version Used: $$($(COMPILER_cmd.$(CLANG_LABEL)) --version | head -n 1)"; fi
 
-$(BIN_DIR)/unity-gcc: $(TEST_SOURCES) | $(BIN_DIR)
-	gcc $(CFLAGS_gcc) $(TEST_SOURCES) -o $@
+$(BIN_DIR)/unity-$(GCC_LABEL): $(TEST_SOURCES) | $(BIN_DIR)
+	$(COMPILER_cmd.$(GCC_LABEL)) $(CFLAGS_gcc) $(TEST_SOURCES) -o $@
 
-$(BIN_DIR)/unity-clang: $(TEST_SOURCES) | $(BIN_DIR)
-	clang $(CFLAGS_clang) $(TEST_SOURCES) -o $@
+$(BIN_DIR)/unity-$(CLANG_LABEL): $(TEST_SOURCES) | $(BIN_DIR)
+	$(COMPILER_cmd.$(CLANG_LABEL)) $(CFLAGS_clang) $(TEST_SOURCES) -o $@
 
 # Clean all built executables
 clean:
