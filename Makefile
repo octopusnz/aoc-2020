@@ -60,7 +60,11 @@ GCC_COMPILER ?= gcc-latest
 CLANG_COMPILER ?= clang-latest
 
 # Detect available compiler commands with fallback to standard names
+ifeq ($(UNAME_S),Darwin)
+GCC_CANDIDATES   := /opt/homebrew/bin/gcc-15 $(GCC_COMPILER) gcc
+else
 GCC_CANDIDATES   := $(GCC_COMPILER) gcc
+endif
 CLANG_CANDIDATES := $(CLANG_COMPILER) clang
 
 DETECTED_GCC   := $(firstword $(foreach c,$(GCC_CANDIDATES),$(if $(shell command -v $(c) 2>/dev/null),$(c))))
@@ -81,6 +85,13 @@ COMPILER_cmd.gcc ?= $(DETECTED_GCC)
 COMPILER_cmd.clang ?= $(ENV_COMPILER_CMD_CLANG)
 COMPILER_cmd.clang ?= $(DETECTED_CLANG)
 AVAILABLE_COMPILERS := $(strip $(if $(COMPILER_cmd.gcc),$(GCC_LABEL)) $(if $(COMPILER_cmd.clang),$(CLANG_LABEL)))
+
+# Homebrew GCC on macOS typically can't link profiling startup objects; drop -pg.
+ifeq ($(UNAME_S),Darwin)
+ifneq ($(filter /opt/homebrew/bin/gcc-15,$(COMPILER_cmd.gcc)),)
+CFLAGS_gcc := $(filter-out -pg,$(CFLAGS_gcc))
+endif
+endif
 
 # If the selected "gcc" command is actually clang (common on some systems),
 # drop GCC-only warning flags to avoid "unknown warning option" noise.

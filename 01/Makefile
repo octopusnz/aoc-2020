@@ -8,7 +8,11 @@ CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Wformat=2 -Werror=implic
 UNAME_S := $(shell uname -s)
 
 # Default tool paths (overridable by environment)
-GCC_PATH ?= /usr/bin/gcc
+ifeq ($(UNAME_S),Darwin)
+GCC_PATH ?= /opt/homebrew/bin/gcc-15
+else
+GCC_PATH ?= gcc
+endif
 CLANG_PATH ?= clang
 VAL_PATH ?= /usr/bin/valgrind
 LEAKS ?= leaks
@@ -21,7 +25,7 @@ ifeq ($(UNAME_S),Darwin)
   # macOS + Apple Clang: no -fsanitize=leak, no static ASan
   F_SANITIZE := -g -fno-omit-frame-pointer -fsanitize=address
   STATIC_ASAN :=
-  # On macOS, /usr/bin/gcc is Clang; make that explicit to avoid surprises
+  # On macOS, the default "gcc" may be Clang; make that explicit to avoid surprises
   GCC_PATH := clang
 else
   # Linux (GCC/Clang): address + leak usually OK; static ASan only for GCC

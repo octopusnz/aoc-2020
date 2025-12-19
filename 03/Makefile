@@ -8,12 +8,19 @@ UNAME_S:=$(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	F_SANITIZE=-g -fsanitize=address -fno-omit-frame-pointer
 	SAN_LIB_FLAG=
+	SAN_CC=$(CLANG_PATH)
+	SAN_CFLAGS=$(CLANG_CFLAGS)
+	GCC_PATH=/opt/homebrew/bin/gcc-15
+	# Homebrew GCC on macOS typically can't link profiling startup objects; drop -pg.
+	GCC_CFLAGS := $(filter-out -pg,$(GCC_CFLAGS))
 else
 	F_SANITIZE=-g -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer
 	SAN_LIB_FLAG=-static-libasan
+	GCC_PATH=gcc
+	SAN_CC=$(GCC_PATH)
+	SAN_CFLAGS=$(GCC_CFLAGS)
 endif
 VAL_PATH=/usr/bin/valgrind
-GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
 LEAKS ?= leaks
 
@@ -49,7 +56,7 @@ test: 	latest $(INPUTS)
 	
 
 latest: $(SOURCES)
-	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(SAN_LIB_FLAG) -o asan.out
+	$(SAN_CC) $(SAN_CFLAGS) $(F_SANITIZE) $(SOURCES) $(SAN_LIB_FLAG) -o asan.out
 	$(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out
 	$(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 
