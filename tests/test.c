@@ -539,16 +539,30 @@ static void test_read_file_to_array_filestore_value_is_nul_terminated_at_max_wid
     FileStore entries[1];
     int out_count;
     int rc;
-    char pw[100];
-    int i;
+    char *pw;
+    size_t prefix_len;
+    size_t pw_len;
+    size_t i;
 
-    for (i = 0; i < 99; ++i)
+    /*
+        `read_file_to_array` reads each line with `fgets(line, MAX_LINE_LENGTH, ...)`.
+        To ensure the password is not truncated by `fgets`, keep:
+            prefix + password + "\n" <= MAX_LINE_LENGTH - 1
+    */
+    prefix_len = strlen("1-1 a: ");
+    if (MAX_LINE_LENGTH < 3 || prefix_len + 2 > (size_t)MAX_LINE_LENGTH)
+        TEST_FAIL_MESSAGE("MAX_LINE_LENGTH too small for this test");
+
+    pw_len = (size_t)MAX_LINE_LENGTH - prefix_len - 2;
+    pw = (char *)malloc(pw_len + 1);
+    TEST_ASSERT_NOT_NULL(pw);
+    for (i = 0; i < pw_len; ++i)
         pw[i] = 'a';
-    pw[99] = '\0';
+    pw[pw_len] = '\0';
 
     fp = fopen(fname, "w");
     TEST_ASSERT_NOT_NULL(fp);
-    fprintf(fp, "1-100 a: %s\n", pw);
+    fprintf(fp, "1-1 a: %s\n", pw);
     fclose(fp);
 
     out_count = 0;
@@ -556,8 +570,9 @@ static void test_read_file_to_array_filestore_value_is_nul_terminated_at_max_wid
     TEST_ASSERT_EQUAL_INT(0, rc);
     TEST_ASSERT_EQUAL_INT(1, out_count);
     TEST_ASSERT_EQUAL_INT('\0', entries[0].value[MAX_LINE_LENGTH - 1]);
-    TEST_ASSERT_EQUAL_INT(99, (int)strlen(entries[0].value));
-    TEST_ASSERT_EQUAL_INT('\0', entries[0].value[99]);
+    TEST_ASSERT_EQUAL_INT((int)pw_len, (int)strlen(entries[0].value));
+    TEST_ASSERT_EQUAL_INT('\0', entries[0].value[pw_len]);
+    free(pw);
     remove(fname);
 }
 
