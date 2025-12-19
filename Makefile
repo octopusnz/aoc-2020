@@ -15,6 +15,7 @@ COMMON_CFLAGS = -Ilibs \
 GCC_ONLY_CFLAGS = -Wduplicated-cond \
                   -Wduplicated-branches
 
+
 # Clang-only flags
 CLANG_ONLY_CFLAGS = \
          -Wnewline-eof \
@@ -64,6 +65,19 @@ COMPILER_cmd.gcc ?= $(DETECTED_GCC)
 COMPILER_cmd.clang ?= $(ENV_COMPILER_CMD_CLANG)
 COMPILER_cmd.clang ?= $(DETECTED_CLANG)
 AVAILABLE_COMPILERS := $(strip $(if $(COMPILER_cmd.gcc),$(GCC_LABEL)) $(if $(COMPILER_cmd.clang),$(CLANG_LABEL)))
+
+# If the selected "gcc" command is actually clang (common on some systems),
+# drop GCC-only warning flags to avoid "unknown warning option" noise.
+GCC_IS_CLANG := $(shell \
+	if [ -n "$(COMPILER_cmd.gcc)" ]; then \
+		$(COMPILER_cmd.gcc) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0; \
+	else \
+		echo 0; \
+	fi)
+
+ifeq ($(GCC_IS_CLANG),1)
+GCC_ONLY_CFLAGS := $(filter-out -Wduplicated-cond -Wduplicated-branches,$(GCC_ONLY_CFLAGS))
+endif
 
 # Find all problem folders with main.c
 PROBLEM_SRCS := $(wildcard [0-9][0-9]/main.c)

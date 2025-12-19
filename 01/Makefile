@@ -29,6 +29,12 @@ else
   STATIC_ASAN := -static-libasan
 endif
 
+# If "gcc" is aliased/wrapped to clang (common on macOS), drop GCC-only warning flags.
+GCC_IS_CLANG := $(shell $(GCC_PATH) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
+ifeq ($(GCC_IS_CLANG),1)
+  GCC_CFLAGS := $(filter-out -Wduplicated-cond -Wduplicated-branches,$(GCC_CFLAGS))
+endif
+
 .PHONY: test clean latest unity unity-coverage
 
 test: latest $(INPUTS)

@@ -2,6 +2,7 @@ INPUTS=sample.txt finaldata.txt
 GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
 CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
 UNAME_S:=$(shell uname -s)
+
 # Address/Leak sanitizer flags differ by platform. macOS clang does not support
 # -fsanitize=leak as a separate flag nor linking a static libasan.
 ifeq ($(UNAME_S),Darwin)
@@ -14,6 +15,13 @@ endif
 VAL_PATH=/usr/bin/valgrind
 GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
+
+# If "gcc" is aliased/wrapped to clang, drop GCC-only warning flags.
+GCC_IS_CLANG := $(shell $(GCC_PATH) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
+ifeq ($(GCC_IS_CLANG),1)
+	GCC_CFLAGS := $(filter-out -Wduplicated-cond -Wduplicated-branches,$(GCC_CFLAGS))
+endif
+
 UNITY_PATH=../libs/unity/unity.c
 TEST_PATH=../tests/test.c
 SOURCES:=main.c ../libs/eight_files.c ../libs/eight_algorithms.c
