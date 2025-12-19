@@ -38,9 +38,8 @@ endif
 
 .PHONY: test clean latest unity unity-coverage
 
-test: latest $(INPUTS)
-	./asan.out $(INPUTS)
-  @set -e; \
+test: latest $(INPUTS) ; @./asan.out $(INPUTS); \
+  set -e; \
   if [ "$(UNAME_S)" = "Darwin" ]; then \
     LEAKS_PATH=$$(command -v "$(LEAKS)" 2>/dev/null || true); \
     if [ -n "$$LEAKS_PATH" ]; then \
