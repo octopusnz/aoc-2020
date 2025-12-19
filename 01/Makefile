@@ -39,12 +39,20 @@ endif
 
 test: latest $(INPUTS)
 	./asan.out $(INPUTS)
-	@VAL=$$(command -v "$(VAL_PATH)" 2>/dev/null || true) ; \
-	if [ -n "$$VAL" ]; then \
-		"$$VAL" -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS) ; \
-	else \
-		echo "valgrind not found (VAL_PATH=$(VAL_PATH)); skipping memcheck" ; \
-	fi
+  @set -e; \
+  if [ "$(UNAME_S)" = "Darwin" ]; then \
+    LEAKS=$$(command -v leaks 2>/dev/null || true); \
+    if [ -n "$$LEAKS" ]; then \
+      "$$LEAKS" --atExit -- ./clang.out $(INPUTS); \
+      exit 0; \
+    fi; \
+  fi; \
+  VAL=$$(command -v "$(VAL_PATH)" 2>/dev/null || true) ; \
+  if [ -n "$$VAL" ]; then \
+    "$$VAL" -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS) ; \
+  else \
+    echo "valgrind not found (VAL_PATH=$(VAL_PATH)); skipping memcheck" ; \
+  fi
 
 latest: $(SOURCES) ; $(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(STATIC_ASAN) -o asan.out ; $(GCC_PATH) $(GCC_CFLAGS) $(SOURCES) -o gcc.out ; $(CLANG_PATH) $(CLANG_CFLAGS) $(SOURCES) -o clang.out
 

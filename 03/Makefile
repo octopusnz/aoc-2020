@@ -31,7 +31,15 @@ TEST_SOURCES:=$(UNITY_PATH) $(TEST_PATH) ../libs/eight_files.c ../libs/eight_alg
 
 test: 	latest $(INPUTS)
 	./asan.out $(INPUTS)
-	@VAL=$$(command -v "$(VAL_PATH)" 2>/dev/null || true) ; \
+	@set -e; \
+	if [ "$(UNAME_S)" = "Darwin" ]; then \
+		LEAKS=$$(command -v leaks 2>/dev/null || true); \
+		if [ -n "$$LEAKS" ]; then \
+			"$$LEAKS" --atExit -- ./clang.out $(INPUTS); \
+			exit 0; \
+		fi; \
+	fi; \
+	VAL=$$(command -v "$(VAL_PATH)" 2>/dev/null || true) ; \
 	if [ -n "$$VAL" ]; then \
 		"$$VAL" -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS) ; \
 	else \

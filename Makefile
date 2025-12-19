@@ -39,6 +39,9 @@ TEST_SOURCES = $(UNITY_PATH) $(TEST_PATH) $(LIBS)
 # Optional valgrind support (skips cleanly if not installed)
 VALGRIND ?= /usr/bin/valgrind
 VALGRIND_ARGS ?= -s --tool=memcheck --leak-check=full
+
+# Host OS (for optional macOS leaks integration)
+UNAME_S := $(shell uname -s)
 # Preferred compiler commands (can be overridden at invocation)
 GCC_COMPILER ?= gcc-latest
 CLANG_COMPILER ?= clang-latest
@@ -128,13 +131,25 @@ unity test: $(UNITY_EXES)
 	@if [ -n "$(COMPILER_cmd.$(CLANG_LABEL))" ]; then echo "Clang Version Used: $$($(COMPILER_cmd.$(CLANG_LABEL)) --version | head -n 1)"; fi
 
 memcheck: $(UNITY_EXES)
-	@VAL=$$(command -v "$(VALGRIND)" 2>/dev/null || true); \
+	@set -e; \
+	if [ "$(UNAME_S)" = "Darwin" ]; then \
+		LEAKS=$$(command -v leaks 2>/dev/null || true); \
+		if [ -n "$$LEAKS" ]; then \
+			echo "Running Unity tests under leaks..."; \
+			for exe in $(UNITY_EXES); do \
+				echo "==> $$exe"; \
+				"$$LEAKS" --atExit -- ./$$exe; \
+			done; \
+			exit 0; \
+		fi; \
+	fi; \
+	VAL=$$(command -v "$(VALGRIND)" 2>/dev/null || true); \
 	if [ -z "$$VAL" ]; then \
 		echo "valgrind not found (VALGRIND=$(VALGRIND)); skipping memcheck"; \
 		exit 0; \
 	fi; \
 	echo "Running Unity tests under valgrind..."; \
-	set -e; for exe in $(UNITY_EXES); do \
+	for exe in $(UNITY_EXES); do \
 		echo "==> $$exe"; \
 		"$$VAL" $(VALGRIND_ARGS) ./$$exe; \
 	done
