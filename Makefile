@@ -34,6 +34,10 @@ BIN_DIR = bin
 UNITY_PATH = libs/unity/unity.c
 TEST_PATH  = tests/test.c
 TEST_SOURCES = $(UNITY_PATH) $(TEST_PATH) $(LIBS)
+
+# Optional valgrind support (skips cleanly if not installed)
+VALGRIND ?= /usr/bin/valgrind
+VALGRIND_ARGS ?= -s --tool=memcheck --leak-check=full
 # Preferred compiler commands (can be overridden at invocation)
 GCC_COMPILER ?= gcc-latest
 CLANG_COMPILER ?= clang-latest
@@ -69,7 +73,7 @@ PROBLEMS := $(patsubst %/,%, $(PROBLEM_DIRS))
 # Executables per available compiler
 EXES := $(foreach P,$(PROBLEMS),$(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$(P)-$(C)))
 
-.PHONY: all clean $(PROBLEMS) gcc clang unity test
+.PHONY: all clean $(PROBLEMS) gcc clang unity test memcheck
 
 all: $(BIN_DIR) $(EXES)
 
@@ -108,6 +112,18 @@ unity test: $(UNITY_EXES)
 	@echo "All Unity tests completed."
 	@if [ -n "$(COMPILER_cmd.$(GCC_LABEL))" ]; then echo "GCC Version Used: $$($(COMPILER_cmd.$(GCC_LABEL)) --version | head -n 1)"; fi
 	@if [ -n "$(COMPILER_cmd.$(CLANG_LABEL))" ]; then echo "Clang Version Used: $$($(COMPILER_cmd.$(CLANG_LABEL)) --version | head -n 1)"; fi
+
+memcheck: $(UNITY_EXES)
+	@VAL=$$(command -v "$(VALGRIND)" 2>/dev/null || true); \
+	if [ -z "$$VAL" ]; then \
+		echo "valgrind not found (VALGRIND=$(VALGRIND)); skipping memcheck"; \
+		exit 0; \
+	fi; \
+	echo "Running Unity tests under valgrind..."; \
+	set -e; for exe in $(UNITY_EXES); do \
+		echo "==> $$exe"; \
+		"$$VAL" $(VALGRIND_ARGS) ./$$exe; \
+	done
 
 $(BIN_DIR)/unity-$(GCC_LABEL): $(TEST_SOURCES) | $(BIN_DIR)
 	$(COMPILER_cmd.$(GCC_LABEL)) $(CFLAGS_gcc) $(TEST_SOURCES) -o $@

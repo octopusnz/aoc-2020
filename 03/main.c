@@ -7,8 +7,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
-#include <string.h>
 
 #ifdef _WIN32
 #include <io.h>
@@ -23,17 +21,33 @@
 #include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
 
+static const int rights[5] = {1, 3, 5, 7, 1};
+static const int downs[5] = {1, 1, 1, 1, 2};
+
+static unsigned long count_trees(const DotHashGrid *grid, int right, int down)
+{
+    size_t row;
+    size_t col;
+    unsigned long trees;
+
+    if (!grid || !grid->data || grid->rows <= 0 || grid->cols <= 0)
+        return 0;
+    if (right <= 0 || down <= 0)
+        return 0;
+
+    trees = 0;
+    col = (size_t)right;
+    for (row = (size_t)down; row < (size_t)grid->rows; row += (size_t)down)
+    {
+        if (dothash_get(grid, (int)row, (int)col, 1) == '#')
+            trees++;
+        col += (size_t)right;
+    }
+    return trees;
+}
 int main(int argc, char *argv[])
 {
     int i = 0;
-    int j = 0;
-    int letter_total_valid = 0;           /* per file */
-    int position_total_valid = 0;         /* per file */
-    int letter_total_valid_all = 0;       /* aggregated across files */
-    int position_total_valid_all = 0;     /* aggregated across files */
-    int counter = 0;                      /* number of parsed lines placed into array */
-    int real_lines = 0;                   /* number of valid lines expected */
-    FileStore *magic = NULL;
     DotHashGrid grid = {0, 0, NULL};
     int files = 0;                        /* successfully processed files */
 
@@ -53,30 +67,13 @@ int main(int argc, char *argv[])
         const char *filename = argv[i];
         if (access(filename, R_OK) == 0)
         {
+            int s;
+            unsigned long product;
+
             printf("Processing file: %s\n", filename);
-            real_lines = 0;
-            letter_total_valid = 0;
-            position_total_valid = 0;
-            counter = count_lines_in_file(filename, &real_lines, LINE_MODE_CUSTOM2);
-            if (counter == -1)
-            {
-                fprintf(stderr, "Error counting lines in file: %s\n", filename);
-                continue;
-            }
 
-            if (real_lines <= 0)
-            {
-                printf("File %s is empty or has no valid lines, skipping.\n", filename);
-                continue;
-            }
-
-            /* Guard against multiplication overflow in calloc arguments  -- Refactor this cruft
-            if (real_lines < 0 || (size_t)real_lines > MAX_INT_VALUE)
-            {
-                fprintf(stderr, "Refusing to allocate %d elements (overflow risk)\n", real_lines);
-                continue;
-            } */
-
+            /* Ensure no leak if grid was left populated (defensive) */
+            free_dot_hash_grid(&grid);
             if (read_dot_hash_grid(filename, &grid) != 0)
             {
                 fprintf(stderr, "Error reading file into tight grid\n");
@@ -84,24 +81,22 @@ int main(int argc, char *argv[])
             }
             printf("Grid loaded: %d rows x %d cols\n", grid.rows, grid.cols);
 
-            for (j = 0; j < counter; j++)
+            if (grid.rows <= 0 || grid.cols <= 0 || !grid.data)
             {
-                if (is_letter_count_valid(magic[j]))
-                {
-                    letter_total_valid++;
-                }
-                if (is_position_valid(magic[j]))
-                {
-                    position_total_valid++;
-                }
+                printf("Empty/invalid grid, skipping.\n");
+                free_dot_hash_grid(&grid);
+                continue;
             }
 
-            printf("Total valid strings (letter count): %d\n", letter_total_valid);
-            printf("Total valid strings (position rule): %d\n", position_total_valid);
+            product = 1;
+            for (s = 0; s < 5; ++s)
+            {
+                unsigned long trees = count_trees(&grid, rights[s], downs[s]);
+                printf("Slope right %d, down %d: %lu trees\n", rights[s], downs[s], trees);
+                product *= trees;
+            }
+            printf("Product of trees: %lu\n", product);
 
-            /* Aggregate */
-            letter_total_valid_all += letter_total_valid;
-            position_total_valid_all += position_total_valid;
 
             /* Free on successful path to avoid leaks */
             free_dot_hash_grid(&grid);
@@ -121,11 +116,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (files > 1)
-    {
-        printf("Aggregated valid strings across %d files (letter count): %d\n", files, letter_total_valid_all);
-        printf("Aggregated valid strings across %d files (position rule): %d\n", files, position_total_valid_all);
-    }
 
     return 0;
 }

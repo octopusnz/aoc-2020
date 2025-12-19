@@ -68,18 +68,17 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            /* Guard against multiplication overflow in calloc arguments  -- Refactor this cruft
-            if (real_lines < 0 || (size_t)real_lines > MAX_INT_VALUE)
+            if ((size_t)real_lines > (((size_t)-1) / sizeof(FileStore)))
             {
-                fprintf(stderr, "Refusing to allocate %d elements (overflow risk)\n", real_lines);
+                fprintf(stderr, "Refusing to allocate %d elements (size overflow risk) for %s\n", real_lines, filename);
                 continue;
-            } */
+            }
 
             magic = calloc((size_t)real_lines, sizeof(FileStore));
             if (!magic)
             {
-                fprintf(stderr, "Memory allocation failed for magic array\n");
-                exit(1);
+                fprintf(stderr, "Memory allocation failed for magic array (%d entries)\n", real_lines);
+                continue;
             }
             counter = 0;
             if (read_file_to_array(filename, real_lines, magic, &counter, READ_MODE_FILESTORE) != 0)

@@ -1,4 +1,4 @@
-INPUTS=sample.txt finaldata.txt
+INPUTS=sample.txt input.txt
 GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
 CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
 UNAME_S:=$(shell uname -s)
@@ -23,7 +23,12 @@ TEST_SOURCES:=$(UNITY_PATH) $(TEST_PATH) ../libs/eight_files.c ../libs/eight_alg
 
 test: 	latest $(INPUTS)
 	./asan.out $(INPUTS)
-	$(VAL_PATH) -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS)
+	@VAL=$$(command -v "$(VAL_PATH)" 2>/dev/null || true) ; \
+	if [ -n "$$VAL" ]; then \
+		"$$VAL" -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS) ; \
+	else \
+		echo "valgrind not found (VAL_PATH=$(VAL_PATH)); skipping memcheck" ; \
+	fi
 	
 
 latest: $(SOURCES)

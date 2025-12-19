@@ -59,29 +59,37 @@ int main(int argc, char *argv[])
 
     for (i = 1; i < argc && files < MAX_FILES; ++i)
     {
-        if (access(argv[i], R_OK) == 0)
+        const char *filename = argv[i];
+        if (access(filename, R_OK) == 0)
         {
-            printf("Processing file: %s\n", argv[i]);
+            printf("Processing file: %s\n", filename);
             real_lines = 0;
             counter = count_lines_in_file(argv[i], &real_lines, LINE_MODE_DIGIT);
             if (counter == -1)
             {
-                fprintf(stderr, "Error counting lines in file: %s\n", argv[i]);
+                fprintf(stderr, "Error counting lines in file: %s\n", filename);
                 continue; /* skip this file, don't abort whole program */
             }
             if (real_lines <= 0)
             {
-                printf("File %s is empty or has no valid lines, skipping.\n", argv[i]);
+                printf("File %s is empty or has no valid lines, skipping.\n", filename);
                 continue;
             }
-            magic = calloc(real_lines, sizeof(int));
+
+            if ((size_t)real_lines > (((size_t)-1) / sizeof(int)))
+            {
+                fprintf(stderr, "Refusing to allocate %d ints (size overflow) for %s\n", real_lines, filename);
+                continue;
+            }
+
+            magic = calloc((size_t)real_lines, sizeof(int));
             if (!magic)
             {
                 fprintf(stderr, "Memory allocation failed for magic array\n");
                 exit(1);
             }
             counter = 0;
-            if (read_file_to_array(argv[i], real_lines, magic, &counter, READ_MODE_INT) != 0)
+            if (read_file_to_array(filename, real_lines, magic, &counter, READ_MODE_INT) != 0)
             {
                 fprintf(stderr, "Error reading file into int array\n");
                 free(magic);
@@ -89,14 +97,14 @@ int main(int argc, char *argv[])
             }
             if (counter <= 0)
             {
-                fprintf(stderr, "No integers parsed from %s, skipping.\n", argv[i]);
+                fprintf(stderr, "No integers parsed from %s, skipping.\n", filename);
                 free(magic);
                 continue;
             }
-            printf("Read %d integers from %s\n", counter, argv[i]);
+            printf("Read %d integers from %s\n", counter, filename);
 
             large_int = find_max(magic, counter);
-            if (large_int <= 0)
+            if (large_int < 0)
             {
                 fprintf(stderr, "Error finding max integer in array\n");
                 free(magic);
@@ -116,8 +124,11 @@ int main(int argc, char *argv[])
 
                     if (result3.found)
                     {
+                        long product3;
                         printf("Triple found: %d and %d and %d\n", result3.num1, result3.num2, result3.num3);
-                        printf("Final Result: %d\n", result3.num1 * result3.num2 * result3.num3);
+                        product3 = (long)result3.num1 * (long)result3.num2;
+                        product3 *= (long)result3.num3;
+                        printf("Final Result: %ld\n", product3);
                     }
                     else
                     {
@@ -132,8 +143,10 @@ int main(int argc, char *argv[])
 
                     if (result.found)
                     {
+                        long product2;
                         printf("Pair found: %d and %d\n", result.num1, result.num2);
-                        printf("Final Result: %d\n", result.num1 * result.num2);
+                        product2 = (long)result.num1 * (long)result.num2;
+                        printf("Final Result: %ld\n", product2);
                     }
                     else
                     {
@@ -143,6 +156,14 @@ int main(int argc, char *argv[])
             }
 
             printf("Finding numbers by sorting and then using two pointers...\n");
+
+            if ((size_t)counter > (((size_t)-1) / sizeof(int)))
+            {
+                fprintf(stderr, "Refusing to allocate %d ints (size overflow) for %s\n", counter, filename);
+                free(magic);
+                continue;
+            }
+
             unsorted = (int *)malloc((size_t)counter * sizeof(int));
             if (!unsorted)
             {
@@ -156,12 +177,6 @@ int main(int argc, char *argv[])
             end = clock();
             qsort_time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
 
-            memcpy(unsorted, magic, (size_t)counter * sizeof(int));
-            start = clock();
-            bubble_sort(unsorted, counter);
-            end = clock();
-            bubble_time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
-
             start = clock();
             result = find_pair_sorted(unsorted, counter, target_num);
             end = clock();
@@ -169,17 +184,30 @@ int main(int argc, char *argv[])
 
             if (result.found)
             {
+                long product2;
                 printf("Pair found: %d and %d\n", result.num1, result.num2);
-                printf("Final Result: %d\n", result.num1 * result.num2);
+                product2 = (long)result.num1 * (long)result.num2;
+                printf("Final Result: %ld\n", product2);
             }
             else
             {
                 printf("No pair found.\n");
             }
 
+            memcpy(unsorted, magic, (size_t)counter * sizeof(int));
+            start = clock();
+            bubble_sort(unsorted, counter);
+            end = clock();
+            bubble_time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
+
+            start = clock();
+            (void)find_pair_sorted(unsorted, counter, target_num);
+            end = clock();
+            bubble_time_taken += ((double)(end - start)) / CLOCKS_PER_SEC;
+
             final_times[0].time = hash_time_taken;
             final_times[1].time = qsort_time_taken + pair_time_taken;
-            final_times[2].time = bubble_time_taken + pair_time_taken;
+            final_times[2].time = bubble_time_taken;
             {
                 size_t msz = sizeof(final_times[0].method);
                 strncpy(final_times[0].method, "Hashtable:", msz - 1);
@@ -209,7 +237,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            fprintf(stderr, "This file didn't exist or wasn't readable: %s\n", argv[i]);
+            fprintf(stderr, "This file didn't exist or wasn't readable: %s\n", filename);
         }
     }
 

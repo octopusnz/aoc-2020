@@ -11,11 +11,24 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../libs/eight_files.h"
+
+static void discard_line_remainder(FILE *fp)
+{
+    int ch;
+    if (!fp)
+        return;
+    while ((ch = fgetc(fp)) != EOF)
+    {
+        if (ch == '\n')
+            break;
+    }
+}
 
 int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
 {
@@ -140,6 +153,13 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
     int count = 0;
     char line[MAX_LINE_LENGTH];
 
+    if (!file_path || !out_array || array_size <= 0)
+    {
+        if (out_count)
+            *out_count = 0;
+        return -1;
+    }
+
     fp = fopen(file_path, "r");
     if (fp == NULL)
     {
@@ -163,6 +183,7 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
                 entries[count].max = max;
                 entries[count].letter = letter;
                 strncpy(entries[count].value, value, MAX_LINE_LENGTH);
+                entries[count].value[MAX_LINE_LENGTH - 1] = '\0';
                 count++;
             }
             else
@@ -175,12 +196,20 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
     {
         int *data = (int *)out_array;
         char *endptr = NULL;
-        int check_value = 0;
         while (fgets(line, sizeof(line), fp) && count < array_size)
         {
+            long parsed;
+            size_t linelen;
+
+            linelen = strlen(line);
+            if (linelen > 0 && line[linelen - 1] != '\n' && !feof(fp))
+            {
+                /* Line too long for buffer; discard remainder so we don't treat it as extra lines */
+                discard_line_remainder(fp);
+            }
             line[strcspn(line, "\n")] = 0;
             errno = 0;
-            check_value = (int)strtol(line, &endptr, 10);
+            parsed = strtol(line, &endptr, 10);
             /* Treat no-conversion and out-of-range as invalid lines, not fatal errors */
             if (endptr == line)
             {
@@ -194,9 +223,13 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
             {
                 printf("Valid number, but followed by non-numeric data\n");
             }
+            else if (parsed < (long)INT_MIN || parsed > (long)INT_MAX)
+            {
+                fprintf(stderr, "Integer out of int range: %s\n", line);
+            }
             else
             {
-                data[count] = check_value;
+                data[count] = (int)parsed;
                 count++;
             }
         }   
@@ -211,6 +244,11 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
             size_t len;
             size_t k;
             int valid;
+
+            if (strlen(line) > 0 && line[strlen(line) - 1] != '\n' && !feof(fp))
+            {
+                discard_line_remainder(fp);
+            }
 
             /* Trim newline */
             line[strcspn(line, "\n")] = 0;
@@ -295,6 +333,12 @@ int read_dot_hash_grid(const char *file_path, DotHashGrid *out_grid)
         size_t len;
         size_t k;
         int valid = 1;
+
+        if (strlen(line) > 0 && line[strlen(line) - 1] != '\n' && !feof(fp))
+        {
+            /* Discard remainder of overly-long line */
+            discard_line_remainder(fp);
+        }
         line[strcspn(line, "\n")] = 0;
         if (line[0] == '\0')
             continue;
@@ -327,6 +371,14 @@ int read_dot_hash_grid(const char *file_path, DotHashGrid *out_grid)
     /* Allocate tight buffer */
     out_grid->rows = rows;
     out_grid->cols = cols;
+
+    if ((size_t)rows > (((size_t)-1) / (size_t)cols))
+    {
+        fprintf(stderr, "Refusing to allocate DotHashGrid (%d x %d): size overflow\n", rows, cols);
+        out_grid->rows = out_grid->cols = 0;
+        return -1;
+    }
+
     out_grid->data = (char *)calloc((size_t)rows * (size_t)cols, sizeof(char));
     if (!out_grid->data)
     {
@@ -350,6 +402,11 @@ int read_dot_hash_grid(const char *file_path, DotHashGrid *out_grid)
     {
         size_t len;
         size_t c;
+
+        if (strlen(line) > 0 && line[strlen(line) - 1] != '\n' && !feof(fp))
+        {
+            discard_line_remainder(fp);
+        }
         line[strcspn(line, "\n")] = 0;
         if (line[0] == '\0')
             continue;
@@ -359,11 +416,11 @@ int read_dot_hash_grid(const char *file_path, DotHashGrid *out_grid)
         for (c = 0; c < len; ++c)
         {
             char ch = line[c];
-            out_grid->data[r * cols + (int)c] = (ch == '.' || ch == '#') ? ch : '.';
+            out_grid->data[(size_t)r * (size_t)cols + c] = (ch == '.' || ch == '#') ? ch : '.';
         }
         for (; c < (size_t)cols; ++c)
         {
-            out_grid->data[r * cols + (int)c] = '.';
+            out_grid->data[(size_t)r * (size_t)cols + c] = '.';
         }
         r++;
     }

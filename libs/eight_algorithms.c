@@ -10,8 +10,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
+
+static size_t eight_strnlen(const char *s, size_t maxlen)
+{
+    size_t n = 0;
+    if (!s)
+        return 0;
+    while (n < maxlen && s[n] != '\0')
+        n++;
+    return n;
+}
 
 int is_position_valid(FileStore entry)
 {
@@ -19,13 +30,14 @@ int is_position_valid(FileStore entry)
     int pos2 = entry.max - 1;
     int match1 = 0;
     int match2 = 0;
+    size_t len = eight_strnlen(entry.value, MAX_LINE_LENGTH);
 
-    if (pos1 >= 0 && entry.value[pos1] == entry.letter)
+    if (pos1 >= 0 && (size_t)pos1 < len && entry.value[pos1] == entry.letter)
     {
         match1 = 1;
     }
 
-    if (pos2 >= 0 && entry.value[pos2] == entry.letter)
+    if (pos2 >= 0 && (size_t)pos2 < len && entry.value[pos2] == entry.letter)
     {
         match2 = 1;
     }
@@ -68,6 +80,9 @@ void bubble_sort(int *array_name, int array_size)
     int j = 0;
     int temp = 0;
 
+    if (!array_name || array_size <= 1)
+        return;
+
     for (i = 0; i < array_size - 1; i++)
     {
         swapped = 0;
@@ -91,8 +106,11 @@ ManyMatches find_triple_sorted(int *array_name, int array_size, int target_num)
     int i = 0;
     int left = 0;
     int right = 0;
-    int sum = 0;
+    long sum = 0;
     ManyMatches result = {0, 0, 0, 0};
+
+    if (!array_name || array_size < 3)
+        return result;
 
     for (i = 0; i < array_size - 2; i++)
     {
@@ -101,7 +119,7 @@ ManyMatches find_triple_sorted(int *array_name, int array_size, int target_num)
 
         while (left < right)
         {
-            sum = array_name[i] + array_name[left] + array_name[right];
+            sum = (long)array_name[i] + (long)array_name[left] + (long)array_name[right];
             if (sum == target_num)
             {
                 result.num1 = array_name[left];
@@ -127,11 +145,15 @@ Matches find_pair_sorted(int *array_name, int array_size, int target_num)
 {
     int left = 0;
     int right = array_size - 1;
+    long sum = 0;
     Matches result = {0, 0, 0};
+
+    if (!array_name || array_size < 2)
+        return result;
 
     while (left < right)
     {
-        int sum = array_name[left] + array_name[right];
+        sum = (long)array_name[left] + (long)array_name[right];
 
         if (sum == target_num)
         {
@@ -186,12 +208,25 @@ int qsort_compare(const void *a, const void *b)
 
 ManyMatches find_triple(int *array_name, int array_size, int large_int, int target_num)
 {
-    int *hashTable = (int *)calloc(large_int + 1, sizeof(int));
+    int *hashTable = NULL;
+    size_t table_len = 0;
     int i = 0;
     int j = 0;
-    int current_target = 0;
-    int complement = 0;
+    long current_target = 0;
+    long complement = 0;
     ManyMatches result = {0, 0, 0, 0};
+
+    if (!array_name || array_size < 3 || large_int < 0)
+        return result;
+
+    table_len = (size_t)large_int + 1;
+    if (table_len == 0 || table_len > (((size_t)-1) / sizeof(int)))
+    {
+        printf("Refusing to allocate hash table of %lu ints\n", (unsigned long)table_len);
+        return result;
+    }
+
+    hashTable = (int *)calloc(table_len, sizeof(int));
 
     if (!hashTable)
     {
@@ -201,16 +236,17 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
 
     for (i = 0; i < array_size - 2; i++)
     {
-        memset(hashTable, 0, (large_int + 1) * sizeof(int));
-        current_target = target_num - array_name[i];
+        memset(hashTable, 0, table_len * sizeof(int));
+        current_target = (long)target_num - (long)array_name[i];
 
         for (j = i + 1; j < array_size; j++)
         {
-            complement = current_target - array_name[j];
+            long v = (long)array_name[j];
+            complement = current_target - v;
 
-            if (complement >= 0 && complement < large_int + 1 && hashTable[complement])
+            if (complement >= 0 && complement < (long)table_len && hashTable[(int)complement])
             {
-                result.num1 = complement;
+                result.num1 = (int)complement;
                 result.num2 = array_name[i];
                 result.num3 = array_name[j];
                 result.found = 1;
@@ -218,15 +254,9 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
                 return result;
             }
 
-            if (array_name[j] >= 0 && array_name[j] < large_int + 1)
+            if (v >= 0 && v < (long)table_len)
             {
-                hashTable[array_name[j]] = 1;
-            }
-            else
-            {
-                printf("Out-of-bounds value %d at index %d\n", array_name[j], j);
-                free(hashTable);
-                return result;
+                hashTable[(int)v] = 1;
             }
         }
     }
@@ -238,10 +268,23 @@ ManyMatches find_triple(int *array_name, int array_size, int large_int, int targ
 
 Matches find_pair(int *array_name, int array_size, int large_int, int target_num)
 {
-    int *hashTable = (int *)calloc(large_int + 1, sizeof(int));
+    int *hashTable = NULL;
+    size_t table_len = 0;
     int i = 0;
-    int complement = 0;
+    long complement = 0;
     Matches result = {0, 0, 0};
+
+    if (!array_name || array_size < 2 || large_int < 0)
+        return result;
+
+    table_len = (size_t)large_int + 1;
+    if (table_len == 0 || table_len > (((size_t)-1) / sizeof(int)))
+    {
+        printf("Refusing to allocate hash table of %lu ints\n", (unsigned long)table_len);
+        return result;
+    }
+
+    hashTable = (int *)calloc(table_len, sizeof(int));
 
     if (!hashTable)
     {
@@ -251,25 +294,20 @@ Matches find_pair(int *array_name, int array_size, int large_int, int target_num
 
     for (i = 0; i < array_size; i++)
     {
-        complement = target_num - array_name[i];
-        if (complement >= 0 && complement < large_int + 1 && hashTable[complement])
+        long v = (long)array_name[i];
+        complement = (long)target_num - v;
+        if (complement >= 0 && complement < (long)table_len && hashTable[(int)complement])
         {
             result.num1 = array_name[i];
-            result.num2 = complement;
+            result.num2 = (int)complement;
             result.found = 1;
             free(hashTable);
             return result;
         }
 
-        if (array_name[i] >= 0 && array_name[i] < large_int + 1)
+        if (v >= 0 && v < (long)table_len)
         {
-            hashTable[array_name[i]] = 1;
-        }
-        else
-        {
-            printf("Out-of-bounds access detected at index %d\n", array_name[i]);
-            free(hashTable);
-            return result;
+            hashTable[(int)v] = 1;
         }
     }
     printf("No pair found.\n");

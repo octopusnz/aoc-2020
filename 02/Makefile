@@ -23,8 +23,12 @@ TEST_SOURCES:=$(UNITY_PATH) $(TEST_PATH) ../libs/eight_files.c ../libs/eight_alg
 
 test: 	latest $(INPUTS)
 	./asan.out $(INPUTS)
-	$(VAL_PATH) -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS)
-	
+	@VAL=$$(command -v "$(VAL_PATH)" 2>/dev/null || true) ; \
+	if [ -n "$$VAL" ]; then \
+		"$$VAL" -s --tool=memcheck --leak-check=full ./clang.out $(INPUTS) ; \
+	else \
+		echo "valgrind not found (VAL_PATH=$(VAL_PATH)); skipping memcheck" ; \
+	fi
 
 latest: $(SOURCES)
 	$(GCC_PATH) $(GCC_CFLAGS) $(F_SANITIZE) $(SOURCES) $(SAN_LIB_FLAG) -o asan.out
