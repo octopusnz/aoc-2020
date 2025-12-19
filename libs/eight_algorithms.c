@@ -195,8 +195,10 @@ int find_max(int *array_name, int array_size)
 
 int qsort_compare(const void *a, const void *b)
 {
-    int int_a = *((int *)a);
-    int int_b = *((int *)b);
+    const int *int_a_ptr = (const int *)a;
+    const int *int_b_ptr = (const int *)b;
+    int int_a = *int_a_ptr;
+    int int_b = *int_b_ptr;
 
     if (int_a == int_b)
         return 0;

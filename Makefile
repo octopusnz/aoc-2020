@@ -7,6 +7,16 @@ COMMON_CFLAGS = -Ilibs \
                  -Wall \
                  -Werror=missing-braces \
                  -Wextra \
+				 -Wformat=2 \
+				 -Werror=implicit-function-declaration \
+				 -Wmissing-prototypes \
+				 -Wmissing-declarations \
+				 -Wundef \
+				 -Wpointer-arith \
+				 -Wcast-qual \
+				 -Wwrite-strings \
+				 -Wswitch-enum \
+				 -Wswitch-default \
                  -Wshadow \
                  -Wstrict-prototypes \
                  -pg

@@ -1,6 +1,6 @@
 INPUTS=sample.txt input.txt
-GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
-CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
+GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wformat=2 -Werror=implicit-function-declaration -Wmissing-prototypes -Wmissing-declarations -Wundef -Wpointer-arith -Wcast-qual -Wwrite-strings -Wswitch-enum -Wswitch-default -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
+CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Wformat=2 -Werror=implicit-function-declaration -Wmissing-prototypes -Wmissing-declarations -Wundef -Wpointer-arith -Wcast-qual -Wwrite-strings -Wswitch-enum -Wswitch-default -Werror=format-security -Werror=array-bounds
 UNAME_S:=$(shell uname -s)
 
 # Address/Leak sanitizer flags differ by platform. macOS clang does not support

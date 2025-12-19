@@ -1,8 +1,8 @@
 INPUTS=sample.txt finaldata.txt test1.txt
 
 # Base flags
-GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
-CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Werror=format-security -Werror=array-bounds
+GCC_CFLAGS=-pedantic -std=c89 -Wall -Werror=missing-braces -Wextra -Wformat=2 -Werror=implicit-function-declaration -Wmissing-prototypes -Wmissing-declarations -Wundef -Wpointer-arith -Wcast-qual -Wwrite-strings -Wswitch-enum -Wswitch-default -Wpadded -Wduplicated-cond -Wduplicated-branches -Wshadow -Wstrict-prototypes -pg
+CLANG_CFLAGS=-pedantic -std=c89 -Wall -Wextra -Wformat -Wformat=2 -Werror=implicit-function-declaration -Wmissing-prototypes -Wmissing-declarations -Wundef -Wpointer-arith -Wcast-qual -Wwrite-strings -Wswitch-enum -Wswitch-default -Werror=format-security -Werror=array-bounds
 
 # Detect host OS
 UNAME_S := $(shell uname -s)
