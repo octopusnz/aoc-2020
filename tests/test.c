@@ -17,6 +17,18 @@ void tearDown(void)
     /* No-op for now */
 }
 
+static int count_occurrences(const int *arr, int n, int value)
+{
+    int i;
+    int c = 0;
+    for (i = 0; i < n; ++i)
+    {
+        if (arr[i] == value)
+            c++;
+    }
+    return c;
+}
+
 /* --- Algorithms: positive paths --- */
 static void test_find_max_returns_largest(void)
 {
@@ -27,6 +39,19 @@ static void test_find_max_returns_largest(void)
     n = 5;
     m = find_max(arr, n);
     TEST_ASSERT_EQUAL_INT(5, m);
+}
+
+static void test_find_max_empty_returns_zero(void)
+{
+    int *arr = NULL;
+    TEST_ASSERT_EQUAL_INT(0, find_max(arr, 0));
+}
+
+static void test_find_max_singleton_returns_value(void)
+{
+    int arr[1];
+    arr[0] = -7;
+    TEST_ASSERT_EQUAL_INT(-7, find_max(arr, 1));
 }
 
 static void test_bubble_sort_sorts_ascending(void)
@@ -41,6 +66,24 @@ static void test_bubble_sort_sorts_ascending(void)
     }
 }
 
+static void test_bubble_sort_preserves_multiset_with_duplicates(void)
+{
+    int arr[9];
+    int before[9];
+    int i;
+    int v;
+    arr[0] = 2; arr[1] = -1; arr[2] = 2; arr[3] = 0; arr[4] = -1; arr[5] = 3; arr[6] = 3; arr[7] = 0; arr[8] = 2;
+    for (i = 0; i < 9; ++i)
+        before[i] = arr[i];
+
+    bubble_sort(arr, 9);
+    for (i = 1; i < 9; ++i)
+        TEST_ASSERT_TRUE(arr[i - 1] <= arr[i]);
+
+    for (v = -1; v <= 3; ++v)
+        TEST_ASSERT_EQUAL_INT(count_occurrences(before, 9, v), count_occurrences(arr, 9, v));
+}
+
 static void test_qsort_sorts_ascending(void)
 {
     int arr[5];
@@ -50,6 +93,43 @@ static void test_qsort_sorts_ascending(void)
     for (i = 1; i < 5; ++i)
     {
         TEST_ASSERT_TRUE(arr[i - 1] <= arr[i]);
+    }
+}
+
+static void test_qsort_preserves_multiset_with_duplicates(void)
+{
+    int arr[9];
+    int before[9];
+    int i;
+    int v;
+    arr[0] = 2; arr[1] = -1; arr[2] = 2; arr[3] = 0; arr[4] = -1; arr[5] = 3; arr[6] = 3; arr[7] = 0; arr[8] = 2;
+    for (i = 0; i < 9; ++i)
+        before[i] = arr[i];
+
+    qsort(arr, 9, sizeof(int), qsort_compare);
+    for (i = 1; i < 9; ++i)
+        TEST_ASSERT_TRUE(arr[i - 1] <= arr[i]);
+
+    for (v = -1; v <= 3; ++v)
+        TEST_ASSERT_EQUAL_INT(count_occurrences(before, 9, v), count_occurrences(arr, 9, v));
+}
+
+static void test_qsort_compare_is_antisymmetric(void)
+{
+    int values[5];
+    int i;
+    int j;
+    values[0] = -2; values[1] = -1; values[2] = 0; values[3] = 1; values[4] = 2;
+    for (i = 0; i < 5; ++i)
+    {
+        for (j = 0; j < 5; ++j)
+        {
+            int a = values[i];
+            int b = values[j];
+            int ab = qsort_compare(&a, &b);
+            int ba = qsort_compare(&b, &a);
+            TEST_ASSERT_TRUE((ab == 0 && ba == 0) || (ab < 0 && ba > 0) || (ab > 0 && ba < 0));
+        }
     }
 }
 
@@ -65,6 +145,18 @@ static void test_find_pair_sorted_2020_example(void)
     TEST_ASSERT_TRUE(res.found);
     prod = res.num1 * res.num2;
     TEST_ASSERT_EQUAL_INT(514579, prod);
+}
+
+static void test_find_pair_sorted_allows_duplicate_values_as_distinct_entries(void)
+{
+    int arr[2];
+    Matches res;
+    arr[0] = 1010;
+    arr[1] = 1010;
+    qsort(arr, 2, sizeof(int), qsort_compare);
+    res = find_pair_sorted(arr, 2, 2020);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(2020, res.num1 + res.num2);
 }
 
 static void test_find_pair_hash_2020_example(void)
@@ -112,6 +204,35 @@ static void test_find_triple_sorted_2020_example(void)
     TEST_ASSERT_TRUE(m.found);
     prod = (long)m.num1 * (long)m.num2 * (long)m.num3;
     TEST_ASSERT_EQUAL_INT(241861950, (int)prod);
+}
+
+static void test_find_triple_sorted_allows_duplicates(void)
+{
+    int arr[5];
+    ManyMatches m;
+    arr[0] = 673;
+    arr[1] = 673;
+    arr[2] = 674;
+    arr[3] = 1;
+    arr[4] = 2;
+    qsort(arr, 5, sizeof(int), qsort_compare);
+    m = find_triple_sorted(arr, 5, 2020);
+    TEST_ASSERT_TRUE(m.found);
+    TEST_ASSERT_EQUAL_INT(2020, m.num1 + m.num2 + m.num3);
+}
+
+static void test_find_pair_sorted_handles_overflow_adjacent_values(void)
+{
+    int arr[3];
+    Matches res;
+    arr[0] = INT_MAX;
+    arr[1] = INT_MIN;
+    arr[2] = -1;
+    qsort(arr, 3, sizeof(int), qsort_compare);
+    /* INT_MIN + INT_MAX == -1 without overflowing long-sum logic */
+    res = find_pair_sorted(arr, 3, -1);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(-1, res.num1 + res.num2);
 }
 
 /* --- Algorithms: negative paths --- */
@@ -411,6 +532,66 @@ static void test_read_file_to_array_filestore_and_validate(void)
     remove(fname);
 }
 
+static void test_read_file_to_array_filestore_value_is_nul_terminated_at_max_width(void)
+{
+    const char *fname = "tmp_fs_maxlen.txt";
+    FILE *fp;
+    FileStore entries[1];
+    int out_count;
+    int rc;
+    char pw[100];
+    int i;
+
+    for (i = 0; i < 99; ++i)
+        pw[i] = 'a';
+    pw[99] = '\0';
+
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fprintf(fp, "1-100 a: %s\n", pw);
+    fclose(fp);
+
+    out_count = 0;
+    rc = read_file_to_array(fname, 1, entries, &out_count, READ_MODE_FILESTORE);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(1, out_count);
+    TEST_ASSERT_EQUAL_INT('\0', entries[0].value[MAX_LINE_LENGTH - 1]);
+    TEST_ASSERT_EQUAL_INT(99, (int)strlen(entries[0].value));
+    TEST_ASSERT_EQUAL_INT('\0', entries[0].value[99]);
+    remove(fname);
+}
+
+static void test_read_file_to_array_filestore_malformed_lines_do_not_corrupt_parsed_entries(void)
+{
+    const char *fname = "tmp_fs_mixed.txt";
+    FILE *fp;
+    FileStore entries[3];
+    int out_count;
+    int rc;
+
+    memset(entries, 0, sizeof(entries));
+    entries[0].min = 999;
+    entries[1].min = 999;
+    entries[2].min = 999;
+
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("1-3 a: abcde\n", fp);
+    fputs("this is malformed\n", fp);
+    fputs("2-9 c: ccccccccc\n", fp);
+    fclose(fp);
+
+    out_count = 0;
+    rc = read_file_to_array(fname, 3, entries, &out_count, READ_MODE_FILESTORE);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(2, out_count);
+    TEST_ASSERT_EQUAL_INT(1, entries[0].min);
+    TEST_ASSERT_EQUAL_INT(2, entries[1].min);
+    TEST_ASSERT_EQUAL_CHAR('a', entries[0].letter);
+    TEST_ASSERT_EQUAL_CHAR('c', entries[1].letter);
+    remove(fname);
+}
+
 static void test_read_file_to_array_filestore_respects_array_size_limit(void)
 {
     const char *fname = "tmp_fs_limit.txt";
@@ -584,6 +765,61 @@ static void test_read_dot_hash_grid_pads_short_rows_with_dots(void)
     TEST_ASSERT_EQUAL_CHAR('#', dothash_get(&grid, 0, 0, 0));
     TEST_ASSERT_EQUAL_CHAR('.', dothash_get(&grid, 0, 1, 0));
 
+    free_dot_hash_grid(&grid);
+    remove(fname);
+}
+
+static void test_read_dot_hash_grid_inconsistent_width_uses_max_cols(void)
+{
+    const char *fname = "tmp_grid_width.txt";
+    FILE *fp;
+    DotHashGrid grid;
+    int rc;
+
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("#\n", fp);
+    fputs("###\n", fp);
+    fclose(fp);
+
+    grid.rows = 0;
+    grid.cols = 0;
+    grid.data = NULL;
+    rc = read_dot_hash_grid(fname, &grid);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(2, grid.rows);
+    TEST_ASSERT_EQUAL_INT(3, grid.cols);
+    TEST_ASSERT_EQUAL_CHAR('#', dothash_get(&grid, 0, 0, 0));
+    TEST_ASSERT_EQUAL_CHAR('.', dothash_get(&grid, 0, 2, 0));
+    TEST_ASSERT_EQUAL_CHAR('#', dothash_get(&grid, 1, 2, 0));
+    free_dot_hash_grid(&grid);
+    remove(fname);
+}
+
+static void test_read_dot_hash_grid_long_line_not_split_into_multiple_rows(void)
+{
+    const char *fname = "tmp_grid_long_line.txt";
+    FILE *fp;
+    DotHashGrid grid;
+    int rc;
+    int i;
+
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    for (i = 0; i < 300; ++i)
+        fputc('.', fp);
+    fputc('\n', fp);
+    fputs(".#.\n", fp);
+    fclose(fp);
+
+    grid.rows = 0;
+    grid.cols = 0;
+    grid.data = NULL;
+    rc = read_dot_hash_grid(fname, &grid);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(2, grid.rows);
+    TEST_ASSERT_EQUAL_INT(MAX_LINE_LENGTH - 1, grid.cols);
+    TEST_ASSERT_EQUAL_CHAR('#', dothash_get(&grid, 1, 1, 0));
     free_dot_hash_grid(&grid);
     remove(fname);
 }
@@ -784,12 +1020,20 @@ int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_find_max_returns_largest);
+    RUN_TEST(test_find_max_empty_returns_zero);
+    RUN_TEST(test_find_max_singleton_returns_value);
     RUN_TEST(test_bubble_sort_sorts_ascending);
+    RUN_TEST(test_bubble_sort_preserves_multiset_with_duplicates);
     RUN_TEST(test_qsort_sorts_ascending);
+    RUN_TEST(test_qsort_preserves_multiset_with_duplicates);
+    RUN_TEST(test_qsort_compare_is_antisymmetric);
     RUN_TEST(test_find_pair_sorted_2020_example);
+    RUN_TEST(test_find_pair_sorted_allows_duplicate_values_as_distinct_entries);
     RUN_TEST(test_find_pair_hash_2020_example);
     RUN_TEST(test_find_triple_hash_2020_example);
     RUN_TEST(test_find_triple_sorted_2020_example);
+    RUN_TEST(test_find_triple_sorted_allows_duplicates);
+    RUN_TEST(test_find_pair_sorted_handles_overflow_adjacent_values);
     RUN_TEST(test_find_pair_sorted_no_solution);
     RUN_TEST(test_find_pair_hash_no_solution);
     RUN_TEST(test_find_triple_no_solution_hash_and_sorted);
@@ -806,6 +1050,8 @@ int main(void)
     RUN_TEST(test_read_file_to_array_ints_rejects_plus_sign);
     RUN_TEST(test_read_file_to_array_nonexistent_returns_minus1);
     RUN_TEST(test_read_file_to_array_filestore_and_validate);
+    RUN_TEST(test_read_file_to_array_filestore_value_is_nul_terminated_at_max_width);
+    RUN_TEST(test_read_file_to_array_filestore_malformed_lines_do_not_corrupt_parsed_entries);
     RUN_TEST(test_read_file_to_array_filestore_respects_array_size_limit);
     RUN_TEST(test_read_file_to_array_filestore_all_malformed_yields_zero_count);
     RUN_TEST(test_read_file_to_array_unknown_mode_returns_error);
@@ -815,6 +1061,8 @@ int main(void)
     RUN_TEST(test_dothash_set_and_get);
     RUN_TEST(test_free_dot_hash_grid_is_idempotent);
     RUN_TEST(test_read_dot_hash_grid_pads_short_rows_with_dots);
+    RUN_TEST(test_read_dot_hash_grid_inconsistent_width_uses_max_cols);
+    RUN_TEST(test_read_dot_hash_grid_long_line_not_split_into_multiple_rows);
     RUN_TEST(test_count_lines_in_file_custom1_password_format);
     RUN_TEST(test_count_lines_in_file_custom2_dot_hash_only);
     RUN_TEST(test_read_file_to_array_dothash_parses_valid_rows_only);
