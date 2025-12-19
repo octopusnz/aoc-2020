@@ -232,7 +232,7 @@ jobs:
 
       - name: Lint Makefiles (TAB-sensitive recipes)
         run: |
-          python3 scripts/lint_makefiles.py
+          bash scripts/lint_makefiles.sh
 
       - name: Build and run tests (01)
         run: |

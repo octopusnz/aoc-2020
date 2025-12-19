@@ -103,7 +103,7 @@ PROBLEMS := $(patsubst %/,%, $(PROBLEM_DIRS))
 # Executables per available compiler
 EXES := $(foreach P,$(PROBLEMS),$(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$(P)-$(C)))
 
-.PHONY: all clean $(PROBLEMS) gcc clang unity test memcheck lint lint-makefiles
+.PHONY: all clean $(PROBLEMS) gcc clang unity test memcheck lint lint-makefiles check
 
 all: $(BIN_DIR) $(EXES)
 
@@ -180,4 +180,12 @@ clean:
 lint: lint-makefiles
 
 lint-makefiles:
-	python3 scripts/lint_makefiles.py
+	bash scripts/lint_makefiles.sh
+
+check: lint-makefiles test
+	@set -e; \
+	for d in 01 02 03; do \
+		echo "==> Day $$d unity"; \
+		$(MAKE) -C "$$d" unity; \
+		"./$$d/unity.out"; \
+	done
