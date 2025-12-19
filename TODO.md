@@ -39,3 +39,4 @@
 - Handle Microsoft header files and unity files (seperate LICENSE.txt in folders?)
 - Keep reviewing and updating README.md
 - Investigate AI copyright statement
+- Makefile reminder: GNU make requires TAB-indented recipe lines; run `make lint-makefiles` (also runs in CI)

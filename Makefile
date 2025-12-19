@@ -103,7 +103,7 @@ PROBLEMS := $(patsubst %/,%, $(PROBLEM_DIRS))
 # Executables per available compiler
 EXES := $(foreach P,$(PROBLEMS),$(foreach C,$(AVAILABLE_COMPILERS),$(BIN_DIR)/$(P)-$(C)))
 
-.PHONY: all clean $(PROBLEMS) gcc clang unity test memcheck
+.PHONY: all clean $(PROBLEMS) gcc clang unity test memcheck lint lint-makefiles
 
 all: $(BIN_DIR) $(EXES)
 
@@ -176,3 +176,8 @@ $(BIN_DIR)/unity-$(CLANG_LABEL): $(TEST_SOURCES) | $(BIN_DIR)
 # Clean all built executables
 clean:
 	rm -rf $(BIN_DIR)
+
+lint: lint-makefiles
+
+lint-makefiles:
+	python3 scripts/lint_makefiles.py

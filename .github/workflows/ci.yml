@@ -230,6 +230,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Lint Makefiles (TAB-sensitive recipes)
+        run: |
+          python3 scripts/lint_makefiles.py
+
       - name: Build and run tests (01)
         run: |
           make -C 01 unity
