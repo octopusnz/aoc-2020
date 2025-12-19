@@ -30,6 +30,20 @@ static void discard_line_remainder(FILE *fp)
     }
 }
 
+static int is_blank_line(const char *s)
+{
+    const unsigned char *p = (const unsigned char *)s;
+    if (!p)
+        return 1;
+    while (*p)
+    {
+        if (!isspace(*p))
+            return 0;
+        p++;
+    }
+    return 1;
+}
+
 int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
 {
     FILE *fp = NULL;
@@ -37,7 +51,7 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
     int pc = 0;
     int count = 0;
     int char_count = 0;
-    int real_chars = 0;
+    int non_ws_real_chars = 0;
     int real_char_count = 0;
     int total_count = 0;
     int fake_chars = 0;
@@ -81,31 +95,32 @@ int count_lines_in_file(const char *file_path, int *real_lines, LineMode mode)
                 else if (c == '.')
                     dot_count++;
             }
-            real_chars++;
             real_char_count++;
+            if (!isspace((unsigned char)c))
+                non_ws_real_chars++;
         }
         else if (c != '\n')
         {
             fake_chars++;
         }
-        else if ((c == '\n') && (real_chars > 0) && (fake_chars == 0))
+        else if ((c == '\n') && (non_ws_real_chars > 0) && (fake_chars == 0))
         {
             count++;
             total_count++;
-            real_chars = 0;
+            non_ws_real_chars = 0;
             fake_chars = 0;
         }
         else
         {
             total_count++;
-            real_chars = 0;
+            non_ws_real_chars = 0;
             fake_chars = 0;
         }
         char_count++;
         pc = c;
     }
 
-    if ((pc != '\n') && (real_chars > 0))
+    if ((pc != '\n') && (non_ws_real_chars > 0))
     {
         count++;
         total_count++;
@@ -175,6 +190,15 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
             int min, max;
             char letter;
             char value[MAX_LINE_LENGTH];
+
+            if (strlen(line) > 0 && line[strlen(line) - 1] != '\n' && !feof(fp))
+            {
+                discard_line_remainder(fp);
+            }
+
+            /* Treat whitespace-only lines as empty */
+            if (is_blank_line(line))
+                continue;
             /* TO-DO: Replace sscanf? Buffer width is hard-coded.
                 Should be (MAX_LINE_LENGTH -1) */
             if (sscanf(line, "%d-%d %c: %99s", &min, &max, &letter, value) == 4)
@@ -200,6 +224,7 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
         {
             long parsed;
             size_t linelen;
+            unsigned char first;
 
             linelen = strlen(line);
             if (linelen > 0 && line[linelen - 1] != '\n' && !feof(fp))
@@ -208,6 +233,24 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
                 discard_line_remainder(fp);
             }
             line[strcspn(line, "\n")] = 0;
+
+            /* Treat whitespace-only as empty */
+            if (is_blank_line(line))
+                continue;
+
+            /* Strict: do not accept leading whitespace, and do not accept +123 */
+            first = (unsigned char)line[0];
+            if (isspace(first))
+            {
+                printf("Not a valid integer\n");
+                continue;
+            }
+            if (first == '+')
+            {
+                printf("Not a valid integer\n");
+                continue;
+            }
+
             errno = 0;
             parsed = strtol(line, &endptr, 10);
             /* Treat no-conversion and out-of-range as invalid lines, not fatal errors */
@@ -253,8 +296,8 @@ int read_file_to_array(const char *file_path, int array_size, void *out_array,
             /* Trim newline */
             line[strcspn(line, "\n")] = 0;
 
-            /* Skip empty lines silently */
-            if (line[0] == '\0')
+            /* Skip empty/blank lines silently */
+            if (line[0] == '\0' || is_blank_line(line))
                 continue;
 
             /* Validate characters and measure length */
@@ -340,7 +383,7 @@ int read_dot_hash_grid(const char *file_path, DotHashGrid *out_grid)
             discard_line_remainder(fp);
         }
         line[strcspn(line, "\n")] = 0;
-        if (line[0] == '\0')
+        if (line[0] == '\0' || is_blank_line(line))
             continue;
         len = strlen(line);
         for (k = 0; k < len; ++k)
@@ -408,7 +451,7 @@ int read_dot_hash_grid(const char *file_path, DotHashGrid *out_grid)
             discard_line_remainder(fp);
         }
         line[strcspn(line, "\n")] = 0;
-        if (line[0] == '\0')
+        if (line[0] == '\0' || is_blank_line(line))
             continue;
         len = strlen(line);
         if (len >= (size_t)cols)

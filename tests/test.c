@@ -333,6 +333,49 @@ static void test_read_file_to_array_ints_long_line_is_not_split_into_multiple_en
     remove(fname);
 }
 
+static void test_read_file_to_array_ints_whitespace_only_lines_are_skipped(void)
+{
+    const char *fname = "tmp_ints_blank_ws.txt";
+    FILE *fp;
+    int arr[4];
+    int out_count = -1;
+    int rc;
+
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("   \n", fp);
+    fputs("\t\t\n", fp);
+    fputs("5\n", fp);
+    fclose(fp);
+
+    rc = read_file_to_array(fname, 4, arr, &out_count, READ_MODE_INT);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(1, out_count);
+    TEST_ASSERT_EQUAL_INT(5, arr[0]);
+    remove(fname);
+}
+
+static void test_read_file_to_array_ints_rejects_plus_sign(void)
+{
+    const char *fname = "tmp_ints_plus.txt";
+    FILE *fp;
+    int arr[4];
+    int out_count = -1;
+    int rc;
+
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("+123\n", fp);
+    fputs("7\n", fp);
+    fclose(fp);
+
+    rc = read_file_to_array(fname, 4, arr, &out_count, READ_MODE_INT);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(1, out_count);
+    TEST_ASSERT_EQUAL_INT(7, arr[0]);
+    remove(fname);
+}
+
 static void test_read_file_to_array_nonexistent_returns_minus1(void)
 {
     int arr[1];
@@ -452,6 +495,8 @@ static void test_read_dot_hash_grid_and_get_wraps(void)
     fp = fopen(fname, "w");
     TEST_ASSERT_NOT_NULL(fp);
     fputs(".#.\n", fp);
+    /* Whitespace-only line should be treated as empty */
+    fputs("   \n", fp);
     fputs("#..\n", fp);
     fclose(fp);
 
@@ -555,6 +600,8 @@ static void test_count_lines_in_file_custom1_password_format(void)
     TEST_ASSERT_NOT_NULL(fp);
     /* Valid */
     fputs("1-3 a: abcde\n", fp);
+    /* Whitespace-only should be treated as empty */
+    fputs("    \n", fp);
     /* Invalid due to '*' */
     fputs("1-3 b: ab*de\n", fp);
     /* Valid */
@@ -755,6 +802,8 @@ int main(void)
     RUN_TEST(test_read_file_to_array_ints_out_of_range_is_ignored);
     RUN_TEST(test_read_file_to_array_ints_out_of_int_range_is_ignored);
     RUN_TEST(test_read_file_to_array_ints_long_line_is_not_split_into_multiple_entries);
+    RUN_TEST(test_read_file_to_array_ints_whitespace_only_lines_are_skipped);
+    RUN_TEST(test_read_file_to_array_ints_rejects_plus_sign);
     RUN_TEST(test_read_file_to_array_nonexistent_returns_minus1);
     RUN_TEST(test_read_file_to_array_filestore_and_validate);
     RUN_TEST(test_read_file_to_array_filestore_respects_array_size_limit);

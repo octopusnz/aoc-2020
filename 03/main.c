@@ -18,7 +18,6 @@
 #include <unistd.h>
 #endif
 
-#include "../libs/eight_algorithms.h"
 #include "../libs/eight_files.h"
 
 static const int rights[5] = {1, 3, 5, 7, 1};
