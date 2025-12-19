@@ -42,7 +42,7 @@ For now this will spew a lot of debug and testing information to the console but
 
 6. Take the opportunity to learn maths and algorithms from the problems. For example if, we need to sort an array, implement several different sorts and learn the differences.
 
-7. Have fun and learn more C.
+7. Have fun and learn more C!
 
 ## Development Environment
 

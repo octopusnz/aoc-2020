@@ -15,6 +15,7 @@ endif
 VAL_PATH=/usr/bin/valgrind
 GCC_PATH=/usr/bin/gcc
 CLANG_PATH=clang
+LEAKS ?= leaks
 
 # If "gcc" is aliased/wrapped to clang, drop GCC-only warning flags.
 GCC_IS_CLANG := $(shell $(GCC_PATH) --version 2>/dev/null | head -n 1 | grep -qi clang && echo 1 || echo 0)
@@ -33,9 +34,9 @@ test: 	latest $(INPUTS)
 	./asan.out $(INPUTS)
 	@set -e; \
 	if [ "$(UNAME_S)" = "Darwin" ]; then \
-		LEAKS=$$(command -v leaks 2>/dev/null || true); \
-		if [ -n "$$LEAKS" ]; then \
-			"$$LEAKS" --atExit -- ./clang.out $(INPUTS); \
+		LEAKS_PATH=$$(command -v "$(LEAKS)" 2>/dev/null || true); \
+		if [ -n "$$LEAKS_PATH" ]; then \
+			"$$LEAKS_PATH" --atExit -- ./clang.out $(INPUTS); \
 			exit 0; \
 		fi; \
 	fi; \

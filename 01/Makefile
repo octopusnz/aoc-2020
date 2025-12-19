@@ -11,6 +11,7 @@ UNAME_S := $(shell uname -s)
 GCC_PATH ?= /usr/bin/gcc
 CLANG_PATH ?= clang
 VAL_PATH ?= /usr/bin/valgrind
+LEAKS ?= leaks
 
 # Sources
 SOURCES := main.c ../libs/eight_files.c ../libs/eight_algorithms.c
@@ -41,9 +42,9 @@ test: latest $(INPUTS)
 	./asan.out $(INPUTS)
   @set -e; \
   if [ "$(UNAME_S)" = "Darwin" ]; then \
-    LEAKS=$$(command -v leaks 2>/dev/null || true); \
-    if [ -n "$$LEAKS" ]; then \
-      "$$LEAKS" --atExit -- ./clang.out $(INPUTS); \
+    LEAKS_PATH=$$(command -v "$(LEAKS)" 2>/dev/null || true); \
+    if [ -n "$$LEAKS_PATH" ]; then \
+      "$$LEAKS_PATH" --atExit -- ./clang.out $(INPUTS); \
       exit 0; \
     fi; \
   fi; \

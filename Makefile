@@ -50,6 +50,9 @@ TEST_SOURCES = $(UNITY_PATH) $(TEST_PATH) $(LIBS)
 VALGRIND ?= /usr/bin/valgrind
 VALGRIND_ARGS ?= -s --tool=memcheck --leak-check=full
 
+# Optional macOS leaks tool (defaults to `leaks` on PATH)
+LEAKS ?= leaks
+
 # Host OS (for optional macOS leaks integration)
 UNAME_S := $(shell uname -s)
 # Preferred compiler commands (can be overridden at invocation)
@@ -143,12 +146,12 @@ unity test: $(UNITY_EXES)
 memcheck: $(UNITY_EXES)
 	@set -e; \
 	if [ "$(UNAME_S)" = "Darwin" ]; then \
-		LEAKS=$$(command -v leaks 2>/dev/null || true); \
-		if [ -n "$$LEAKS" ]; then \
+		LEAKS_PATH=$$(command -v "$(LEAKS)" 2>/dev/null || true); \
+		if [ -n "$$LEAKS_PATH" ]; then \
 			echo "Running Unity tests under leaks..."; \
 			for exe in $(UNITY_EXES); do \
 				echo "==> $$exe"; \
-				"$$LEAKS" --atExit -- ./$$exe; \
+				"$$LEAKS_PATH" --atExit -- ./$$exe; \
 			done; \
 			exit 0; \
 		fi; \
