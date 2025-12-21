@@ -14,7 +14,7 @@ else
 GCC_PATH ?= gcc
 endif
 CLANG_PATH ?= clang
-VAL_PATH ?= /usr/bin/valgrind
+VAL_PATH ?= /usr/local/bin/valgrind
 LEAKS ?= leaks
 
 # Sources
@@ -69,4 +69,4 @@ unity: $(TEST_SOURCES) ; $(GCC_PATH) $(GCC_CFLAGS) $(TEST_SOURCES) -o unity.out
 # Coverage build for tests (Linux/GCC)
 unity-coverage: $(TEST_SOURCES) ; $(GCC_PATH) -std=c89 -Wall -Wextra -O0 --coverage $(TEST_SOURCES) -o unity_coverage.out
 
-clean: ; rm -f gcc.out asan.out gmon.out clang.out ; rm -f unity.out unity_coverage.out ; rm -f *.gcno *.gcda ../libs/*.gcno ../libs/*.gcda
+clean: ; rm -f gcc.out asan.out gmon.out clang.out ; rm -f unity.out unity_coverage.out ; rm -f *.gcno *.gcda ../libs/*.gcno ../libs/*.gcda main.s

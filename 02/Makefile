@@ -20,7 +20,7 @@ else
 	SAN_CC=$(GCC_PATH)
 	SAN_CFLAGS=$(GCC_CFLAGS)
 endif
-VAL_PATH=/usr/bin/valgrind
+VAL_PATH=/usr/local/bin/valgrind
 CLANG_PATH=clang
 LEAKS ?= leaks
 
@@ -73,3 +73,4 @@ clean:
 	rm -f clang.out
 	rm -f unity.out unity_coverage.out
 	rm -f *.gcno *.gcda ../libs/*.gcno ../libs/*.gcda
+	rm -f main.s
