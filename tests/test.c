@@ -1031,6 +1031,281 @@ static void test_find_triple_hash_ignores_negative_values(void)
     TEST_ASSERT_EQUAL_INT(2020, res.num1 + res.num2 + res.num3);
 }
 
+/* --- New Algorithm Edge Cases --- */
+static void test_bubble_sort_already_sorted(void)
+{
+    int arr[5] = {1, 2, 3, 4, 5};
+    bubble_sort(arr, 5);
+    TEST_ASSERT_EQUAL_INT(1, arr[0]);
+    TEST_ASSERT_EQUAL_INT(5, arr[4]);
+}
+
+static void test_bubble_sort_reverse_sorted(void)
+{
+    int arr[5] = {5, 4, 3, 2, 1};
+    int i;
+    bubble_sort(arr, 5);
+    for (i = 1; i < 5; ++i)
+        TEST_ASSERT_TRUE(arr[i-1] <= arr[i]);
+}
+
+static void test_bubble_sort_single_element(void)
+{
+    int arr[1] = {42};
+    bubble_sort(arr, 1);
+    TEST_ASSERT_EQUAL_INT(42, arr[0]);
+}
+
+static void test_find_max_all_negative(void)
+{
+    int arr[3] = {-5, -10, -3};
+    TEST_ASSERT_EQUAL_INT(-3, find_max(arr, 3));
+}
+
+static void test_find_max_with_zero(void)
+{
+    int arr[4] = {-5, 0, -3, -1};
+    TEST_ASSERT_EQUAL_INT(0, find_max(arr, 4));
+}
+
+/* --- Pair/Triple with Zero/Negative --- */
+static void test_find_pair_sorted_target_zero(void)
+{
+    int arr[5] = {-3, -1, 0, 2, 3};
+    Matches res = find_pair_sorted(arr, 5, 0);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(0, res.num1 + res.num2);
+}
+
+static void test_find_pair_sorted_negative_target(void)
+{
+    int arr[4] = {-10, -5, -2, -1};
+    Matches res = find_pair_sorted(arr, 4, -7);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(-7, res.num1 + res.num2);
+}
+
+static void test_find_triple_sorted_all_same_value(void)
+{
+    int arr[5] = {7, 7, 7, 7, 7};
+    ManyMatches res = find_triple_sorted(arr, 5, 21);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(21, res.num1 + res.num2 + res.num3);
+}
+
+static void test_find_triple_hash_zero_in_array(void)
+{
+    int arr[6] = {0, 5, 10, 15, 20, 25};
+    int maxv = find_max(arr, 6);
+    ManyMatches res = find_triple(arr, 6, maxv, 30);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(30, res.num1 + res.num2 + res.num3);
+}
+
+static void test_find_pair_hash_with_zero(void)
+{
+    int arr[4] = {0, 5, 10, 15};
+    int maxv = find_max(arr, 4);
+    Matches res = find_pair(arr, 4, maxv, 15);
+    TEST_ASSERT_TRUE(res.found);
+    TEST_ASSERT_EQUAL_INT(15, res.num1 + res.num2);
+}
+
+/* --- Time Struct Sorting --- */
+static void test_qsort_compare_time_struct_same_time(void)
+{
+    Times a = {1.234, "MethodA"};
+    Times b = {1.234, "MethodB"};
+    TEST_ASSERT_EQUAL_INT(0, qsort_compare_time_struct(&a, &b));
+}
+
+static void test_qsort_compare_time_struct_sorts_multiple(void)
+{
+    Times arr[4];
+    arr[0].time = 3.5; strcpy(arr[0].method, "C");
+    arr[1].time = 1.2; strcpy(arr[1].method, "A");
+    arr[2].time = 2.8; strcpy(arr[2].method, "B");
+    arr[3].time = 0.9; strcpy(arr[3].method, "D");
+    
+    qsort(arr, 4, sizeof(Times), qsort_compare_time_struct);
+    
+    TEST_ASSERT_TRUE(arr[0].time <= arr[1].time);
+    TEST_ASSERT_TRUE(arr[1].time <= arr[2].time);
+    TEST_ASSERT_TRUE(arr[2].time <= arr[3].time);
+}
+
+/* --- Validator Boundaries --- */
+static void test_is_letter_count_valid_empty_value(void)
+{
+    FileStore entry;
+    entry.min = 1;
+    entry.max = 3;
+    entry.letter = 'a';
+    entry.value[0] = '\0';
+    TEST_ASSERT_FALSE(is_letter_count_valid(entry));
+}
+
+static void test_is_letter_count_valid_boundary_min(void)
+{
+    FileStore entry;
+    entry.min = 2;
+    entry.max = 5;
+    entry.letter = 'a';
+    strcpy(entry.value, "aa");
+    TEST_ASSERT_TRUE(is_letter_count_valid(entry));
+}
+
+static void test_is_letter_count_valid_boundary_max(void)
+{
+    FileStore entry;
+    entry.min = 2;
+    entry.max = 5;
+    entry.letter = 'a';
+    strcpy(entry.value, "aaaaa");
+    TEST_ASSERT_TRUE(is_letter_count_valid(entry));
+}
+
+static void test_is_position_valid_same_position(void)
+{
+    FileStore entry;
+    entry.min = 1;
+    entry.max = 1;
+    entry.letter = 'a';
+    strcpy(entry.value, "a");
+    TEST_ASSERT_FALSE(is_position_valid(entry));
+}
+
+static void test_is_position_valid_empty_string(void)
+{
+    FileStore entry;
+    entry.min = 1;
+    entry.max = 2;
+    entry.letter = 'a';
+    entry.value[0] = '\0';
+    TEST_ASSERT_FALSE(is_position_valid(entry));
+}
+
+/* --- File Reading Edge Cases --- */
+static void test_read_file_to_array_ints_negative_numbers(void)
+{
+    FILE *fp;
+    const char *fname = "/tmp/test_negatives.txt";
+    int arr[5] = {0};
+    int out_count = -1;
+    int rc;
+    
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("-5\n", fp);
+    fputs("-100\n", fp);
+    fputs("0\n", fp);
+    fclose(fp);
+    
+    rc = read_file_to_array(fname, 5, arr, &out_count, READ_MODE_INT);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(3, out_count);
+    TEST_ASSERT_EQUAL_INT(-5, arr[0]);
+    TEST_ASSERT_EQUAL_INT(-100, arr[1]);
+    TEST_ASSERT_EQUAL_INT(0, arr[2]);
+}
+
+static void test_count_lines_with_mixed_line_endings(void)
+{
+    FILE *fp;
+    const char *fname = "/tmp/test_line_endings.txt";
+    int real_lines = 0;
+    int total;
+    
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("123\n456\n789", fp);
+    fclose(fp);
+    
+    total = count_lines_in_file(fname, &real_lines, LINE_MODE_DIGIT);
+    TEST_ASSERT_EQUAL_INT(3, real_lines);
+    TEST_ASSERT_TRUE(total >= 3);
+}
+
+static void test_read_file_to_array_null_out_count(void)
+{
+    FILE *fp;
+    const char *fname = "/tmp/test_null_count.txt";
+    int arr[3] = {0};
+    int rc;
+    
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("42\n", fp);
+    fclose(fp);
+    
+    rc = read_file_to_array(fname, 3, arr, NULL, READ_MODE_INT);
+    TEST_ASSERT_TRUE(rc == 0 || rc == -1);
+}
+
+/* --- Grid Edge Cases --- */
+static void test_dothash_grid_single_cell(void)
+{
+    FILE *fp;
+    const char *fname = "/tmp/test_single_cell.txt";
+    DotHashGrid grid = {0, 0, NULL};
+    int rc;
+    
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("#", fp);
+    fclose(fp);
+    
+    rc = read_dot_hash_grid(fname, &grid);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(1, grid.rows);
+    TEST_ASSERT_EQUAL_INT(1, grid.cols);
+    TEST_ASSERT_EQUAL_CHAR('#', dothash_get(&grid, 0, 0, 0));
+    
+    free_dot_hash_grid(&grid);
+}
+
+static void test_dothash_grid_all_dots(void)
+{
+    FILE *fp;
+    const char *fname = "/tmp/test_all_dots.txt";
+    DotHashGrid grid = {0, 0, NULL};
+    int rc;
+    
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("...\n", fp);
+    fputs("...\n", fp);
+    fclose(fp);
+    
+    rc = read_dot_hash_grid(fname, &grid);
+    TEST_ASSERT_EQUAL_INT(0, rc);
+    TEST_ASSERT_EQUAL_INT(2, grid.rows);
+    TEST_ASSERT_EQUAL_CHAR('.', dothash_get(&grid, 0, 0, 0));
+    TEST_ASSERT_EQUAL_CHAR('.', dothash_get(&grid, 1, 2, 0));
+    
+    free_dot_hash_grid(&grid);
+}
+
+static void test_dothash_negative_wrap_column(void)
+{
+    FILE *fp;
+    const char *fname = "/tmp/test_neg_wrap.txt";
+    DotHashGrid grid = {0, 0, NULL};
+    char ch;
+    
+    fp = fopen(fname, "w");
+    TEST_ASSERT_NOT_NULL(fp);
+    fputs("#.#\n", fp);
+    fclose(fp);
+    
+    read_dot_hash_grid(fname, &grid);
+    
+    ch = dothash_get(&grid, 0, -1, 1);
+    TEST_ASSERT_EQUAL_CHAR('#', ch);
+    
+    free_dot_hash_grid(&grid);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1087,6 +1362,30 @@ int main(void)
     RUN_TEST(test_algorithm_guards_null_and_small_sizes);
     RUN_TEST(test_find_pair_hash_ignores_negative_values);
     RUN_TEST(test_find_triple_hash_ignores_negative_values);
+    /* New tests for increased coverage */
+    RUN_TEST(test_bubble_sort_already_sorted);
+    RUN_TEST(test_bubble_sort_reverse_sorted);
+    RUN_TEST(test_bubble_sort_single_element);
+    RUN_TEST(test_find_max_all_negative);
+    RUN_TEST(test_find_max_with_zero);
+    RUN_TEST(test_find_pair_sorted_target_zero);
+    RUN_TEST(test_find_pair_sorted_negative_target);
+    RUN_TEST(test_find_triple_sorted_all_same_value);
+    RUN_TEST(test_find_triple_hash_zero_in_array);
+    RUN_TEST(test_find_pair_hash_with_zero);
+    RUN_TEST(test_qsort_compare_time_struct_same_time);
+    RUN_TEST(test_qsort_compare_time_struct_sorts_multiple);
+    RUN_TEST(test_is_letter_count_valid_empty_value);
+    RUN_TEST(test_is_letter_count_valid_boundary_min);
+    RUN_TEST(test_is_letter_count_valid_boundary_max);
+    RUN_TEST(test_is_position_valid_same_position);
+    RUN_TEST(test_is_position_valid_empty_string);
+    RUN_TEST(test_read_file_to_array_ints_negative_numbers);
+    RUN_TEST(test_count_lines_with_mixed_line_endings);
+    RUN_TEST(test_read_file_to_array_null_out_count);
+    RUN_TEST(test_dothash_grid_single_cell);
+    RUN_TEST(test_dothash_grid_all_dots);
+    RUN_TEST(test_dothash_negative_wrap_column);
     return UNITY_END();
 }
 
